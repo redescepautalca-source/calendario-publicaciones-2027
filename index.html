@@ -2612,17 +2612,18 @@ function doPost(e) {
 
     // --- CLOUD SYNC ENGINE (GITHUB API / GOOGLE APPS SCRIPT / REST JSON) ---
     const CLOUD_CONFIG_KEY = 'calendario_publicaciones_2027_cloud_cfg';
+    
     let cloudConfig = {
-      enabled: false,
-      provider: 'github', // 'github' | 'gas' | 'rest'
+      enabled: true,
+      provider: 'gas',
       ghOwner: '',
       ghRepo: '',
       ghBranch: 'main',
       ghPath: 'datos.json',
       ghToken: '',
-      gasUrl: '',
+      gasUrl: 'https://script.google.com/macros/s/AKfycbwwUd1cqRBuBIZnkve4zJPQkdrKuKAMkN2JQQObN_u_BBW96sJyyZ-TnBHE_amteiVgTA/exec',
       restUrl: '',
-      autoSync: false
+      autoSync: true
     };
 
     function loadCloudConfig() {
