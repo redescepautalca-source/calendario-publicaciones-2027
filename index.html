@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plataforma de Calendario de Publicaciones 2027</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .editable-highlight {
+      background-color: #fefce8;
+      border-color: #fde047;
+    }
+    .editable-highlight:focus {
+      background-color: #ffffff;
+      border-color: #4f46e5;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Calendario de Publicaciones</h1>
+            <span id="save-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Guardado automático
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">Planificación dinámica de Cursos, Charlas y Publicaciones Generales</p>
+        </div>
+      </div>
+
+      <!-- Global Controls -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Year Selector -->
+        <div class="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+          <span class="text-xs font-medium text-slate-600 px-2">Año vista:</span>
+          <button id="btn-year-2026" onclick="setGlobalYear(2026)" class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all">2026</button>
+          <button id="btn-year-2027" onclick="setGlobalYear(2027)" class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all">2027</button>
+          <button id="btn-year-all" onclick="setGlobalYear('all')" class="px-2.5 py-1 rounded-md text-xs font-semibold transition-all">Todos</button>
+        </div>
+
+        <!-- Quick Add Program -->
+        <button onclick="openProgramModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Nuevo Programa
+        </button>
+
+        <!-- Quick Add General Publication -->
+        <button onclick="openGeneralModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 shadow-sm transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+          </svg>
+          + Efeméride / General
+        </button>
+
+        <!-- Cloud Team Sync Button -->
+        <div class="inline-flex items-center rounded-lg border border-indigo-200 bg-indigo-50/70 p-0.5">
+          <button onclick="openCloudSyncModal()" id="btn-cloud-config" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold text-indigo-700 hover:bg-white transition-all" title="Configurar sincronización en la nube (GitHub / Google Cloud)">
+            <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span id="cloud-status-label">Nube / Equipo</span>
+          </button>
+          <button onclick="pullFromCloud(false)" id="btn-cloud-pull" class="hidden px-2 py-1 rounded-md text-xs font-semibold text-slate-700 hover:bg-white transition-all" title="Descargar últimos cambios del equipo">
+            ↻ Cargar
+          </button>
+          <button onclick="pushToCloud(false)" id="btn-cloud-push" class="hidden px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs transition-all" title="Guardar y publicar cambios para todo el equipo">
+            ☁️ Publicar
+          </button>
+        </div>
+
+        <!-- Export / Import Dropdown Menu -->
+        <div class="relative">
+          <button onclick="toggleDataMenu()" id="btn-data-menu" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-all">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            Datos / Exportar
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div id="dropdown-data-menu" class="hidden absolute right-0 mt-1.5 w-60 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50">
+            <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Exportar información</div>
+            <button onclick="exportAgendaCSV()" class="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Descargar Agenda (CSV / Excel)
+            </button>
+            <button onclick="exportProgramsCSV()" class="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span> Descargar Cursos y Charlas (CSV)
+            </button>
+            <button onclick="exportBackupJSON()" class="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Guardar Respaldo Completo (.JSON)
+            </button>
+            <div class="border-t border-slate-100 my-1"></div>
+            <div class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Importar / Restaurar</div>
+            <label class="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> Cargar Respaldo (.JSON)
+              <input type="file" id="input-import-json" accept=".json" class="hidden" onchange="importBackupJSON(event)" />
+            </label>
+            <button onclick="openResetConfirmModal()" class="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span> Restaurar Planilla Original 2027
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 flex items-center gap-1 overflow-x-auto border-t border-slate-100 bg-slate-50/60">
+      <button onclick="switchTab('panoramica')" id="tab-btn-panoramica" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+        Panorámica Anual
+      </button>
+      <button onclick="switchTab('mensual')" id="tab-btn-mensual" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        Planificador Mensual
+      </button>
+      <button onclick="switchTab('programas')" id="tab-btn-programas" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        Programas y Parámetros
+      </button>
+      <button onclick="switchTab('agenda')" id="tab-btn-agenda" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        Agenda de Publicaciones
+      </button>
+      <button onclick="switchTab('reglas')" id="tab-btn-reglas" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-all whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+        Reglas e Instrucciones
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-5 space-y-5">
+
+    <!-- KPI Summary Strip -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">Cursos Activos</span>
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold" id="kpi-cursos-badge">C</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-slate-900" id="kpi-cursos-count">0</span>
+          <span class="text-[11px] text-slate-500" id="kpi-cursos-sub">con fecha</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">Charlas Activas</span>
+          <span class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold">CH</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-slate-900" id="kpi-charlas-count">0</span>
+          <span class="text-[11px] text-slate-500" id="kpi-charlas-sub">programadas</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500" id="kpi-pubs-year-label">Publicaciones (2027)</span>
+          <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">#</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-slate-900" id="kpi-pubs-year">0</span>
+          <span class="text-[11px] text-slate-500" id="kpi-pubs-total-sub">de 0 totales</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">Fechas Definitivas</span>
+          <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-emerald-700" id="kpi-definitivas">0</span>
+          <span class="text-[11px] text-slate-500" id="kpi-aproximadas-sub">0 aproximadas</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">Fechas Editoriales</span>
+          <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">✎</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-amber-600" id="kpi-editoriales">0</span>
+          <span class="text-[11px] text-slate-500">fijadas manualmente</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">Mes con Mayor Carga</span>
+          <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs font-bold">★</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-1.5">
+          <span class="text-base font-bold text-slate-900 truncate" id="kpi-peak-month">-</span>
+          <span class="text-xs text-rose-600 font-semibold" id="kpi-peak-count"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 1: PANORÁMICA ANUAL -->
+    <section id="view-panoramica" class="space-y-4 animate-fade-in">
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Panorámica Anual de Publicaciones</span>
+              <span id="panoramica-year-badge" class="px-2.5 py-0.5 text-xs rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">2027</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Haz clic en cualquier día o publicación para editar su fecha editorial, canal, estado o los parámetros del programa.</p>
+          </div>
+
+          <!-- Controls for Panoramica -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- View Mode Toggle -->
+            <div class="inline-flex rounded-lg bg-slate-100 p-0.5 border border-slate-200">
+              <button id="btn-pano-grouped" onclick="setPanoramicaMode('grouped')" class="px-3 py-1 rounded-md text-xs font-semibold transition-all bg-white text-slate-900 shadow-sm">
+                Agrupado por Programa
+              </button>
+              <button id="btn-pano-rows" onclick="setPanoramicaMode('rows')" class="px-3 py-1 rounded-md text-xs font-semibold transition-all text-slate-600">
+                Filas por Publicación (Excel)
+              </button>
+            </div>
+
+            <!-- Filter Origin -->
+            <select id="pano-filter-origin" onchange="renderPanoramica()" class="text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="all">Todos los orígenes</option>
+              <option value="Curso">Solo Cursos</option>
+              <option value="Charla">Solo Charlas</option>
+              <option value="General">Publicaciones Generales</option>
+            </select>
+
+            <!-- Filter Rule Type -->
+            <select id="pano-filter-type" onchange="renderPanoramica()" class="text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="all">Todos los tipos de publicación</option>
+              <option value="Publicación técnica">Publicación técnica</option>
+              <option value="Presentación del programa">Presentación del programa</option>
+              <option value="Promocional (vídeo / slides)">Promocional (vídeo / slides)</option>
+              <option value="Publicación con relator/a">Publicación con relator/a</option>
+            </select>
+
+            <!-- Search Input -->
+            <div class="relative">
+              <input type="text" id="pano-search" oninput="renderPanoramica()" placeholder="Buscar programa o relator..." class="text-xs rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 w-48 sm:w-56 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Color Legend -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="font-semibold text-slate-500">Leyenda de tipos:</span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 font-medium">
+              <span class="w-2 h-2 rounded-full bg-sky-500"></span> Técnica (<span id="legend-weeks-R2">13</span> sem antes)
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200 font-medium">
+              <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Presentación (<span id="legend-weeks-R1">9</span> sem antes)
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> Promocional (+<span id="legend-weeks-R4">1</span> sem)
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Con Relator/a (<span id="legend-weeks-R3">5</span> sem antes)
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-200 font-medium">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span> General / Efeméride
+            </span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-300 font-medium">
+              🎓 Inicio del Programa
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-500">
+            <span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1"></span>Borde dorado = Fecha Editorial manual
+          </div>
+        </div>
+
+        <!-- Matrix Table Container -->
+        <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse min-w-[1100px]">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600" id="panoramica-thead-row">
+                <!-- Populated by JS -->
+              </tr>
+            </thead>
+            <tbody id="panoramica-tbody" class="divide-y divide-slate-200 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PLANIFICADOR MENSUAL -->
+    <section id="view-mensual" class="hidden space-y-4 animate-fade-in">
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Planificador Mensual Interactivo</h2>
+              <p class="text-xs text-slate-500">Visualiza el calendario día a día y gestiona la agenda cronológica del mes seleccionado.</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+              <button onclick="changePlannerMonth(-1)" class="p-1.5 rounded-md hover:bg-white text-slate-700 transition-all" title="Mes anterior">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              </button>
+              <select id="planner-year-select" onchange="onPlannerDateSelect()" class="bg-transparent text-xs font-bold text-slate-800 px-2 py-1 focus:outline-none">
+                <option value="2026">2026</option>
+                <option value="2027" selected>2027</option>
+                <option value="2028">2028</option>
+              </select>
+              <select id="planner-month-select" onchange="onPlannerDateSelect()" class="bg-transparent text-xs font-bold text-indigo-700 px-2 py-1 focus:outline-none">
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4" selected>Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+              </select>
+              <button onclick="changePlannerMonth(1)" class="p-1.5 rounded-md hover:bg-white text-slate-700 transition-all" title="Mes siguiente">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 12 Months Quick Bar -->
+        <div id="planner-months-strip" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-1.5 pt-1">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Split Layout: Calendar Grid + Chronological List -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 pt-2">
+          <!-- Left: Visual Month Calendar Grid (7 cols) -->
+          <div class="xl:col-span-7 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500" id="calendar-grid-title">Calendario Visual</h3>
+              <span class="text-xs text-slate-500">Haz clic en un evento para editarlo</span>
+            </div>
+            <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-200 gap-px grid grid-cols-7 text-center text-[11px] font-bold text-slate-600">
+              <div class="bg-slate-50 py-2">Lun</div>
+              <div class="bg-slate-50 py-2">Mar</div>
+              <div class="bg-slate-50 py-2">Mié</div>
+              <div class="bg-slate-50 py-2">Jue</div>
+              <div class="bg-slate-50 py-2">Vie</div>
+              <div class="bg-slate-50 py-2 text-indigo-600">Sáb</div>
+              <div class="bg-slate-50 py-2 text-rose-600">Dom</div>
+            </div>
+            <div id="calendar-grid-cells" class="border border-slate-200 rounded-xl overflow-hidden bg-slate-200 gap-px grid grid-cols-7">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Right: Chronological Agenda of the Month (5 cols) -->
+          <div class="xl:col-span-5 flex flex-col space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Agenda Cronológica del Mes</h3>
+              <span id="planner-list-count" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">0 publicaciones</span>
+            </div>
+            <div id="planner-chronological-list" class="flex-1 space-y-2.5 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: PROGRAMAS Y PARÁMETROS (CURSOS, CHARLAS, GENERALES) -->
+    <section id="view-programas" class="hidden space-y-4 animate-fade-in">
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Registro y Parámetros de Programas</h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Modifica las celdas amarillas (Año, Mes desde, Mes hasta o Fecha definitiva). Sin fecha definitiva se usa el día 15 del mes o el punto medio del intervalo.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Sub-navigation for Cursos / Charlas / Generales / Referencias -->
+            <div class="inline-flex rounded-lg bg-slate-100 p-1 border border-slate-200">
+              <button id="subtab-cursos" onclick="switchProgramSubtab('cursos')" class="px-3 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-sm transition-all">
+                Cursos (<span id="subtab-count-cursos">0</span>)
+              </button>
+              <button id="subtab-charlas" onclick="switchProgramSubtab('charlas')" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 transition-all">
+                Charlas (<span id="subtab-count-charlas">0</span>)
+              </button>
+              <button id="subtab-generales" onclick="switchProgramSubtab('generales')" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 transition-all">
+                Publicaciones Generales (<span id="subtab-count-generales">0</span>)
+              </button>
+              <button id="subtab-referencias" onclick="switchProgramSubtab('referencias')" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-600 transition-all">
+                Ref: Ya Publicados
+              </button>
+            </div>
+
+            <button onclick="openProgramModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
+              + Agregar Curso / Charla
+            </button>
+          </div>
+        </div>
+
+        <!-- Subview: Cursos & Charlas Table -->
+        <div id="subview-programs-table" class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="relative">
+              <input type="text" id="programs-search" oninput="renderProgramsTable()" placeholder="Filtrar por código, nombre, relator o nota..." class="text-xs rounded-lg border border-slate-300 pl-8 pr-3 py-1.5 w-64 sm:w-80 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            <div class="text-xs text-slate-500 flex items-center gap-3">
+              <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-100 border border-yellow-300 inline-block"></span> Campos editables en vivo</span>
+              <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span> Cálculo automático</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse min-w-[1150px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-2.5 px-3 w-20">Código</th>
+                  <th class="py-2.5 px-3 min-w-[220px]">Programa</th>
+                  <th class="py-2.5 px-2 w-36">Modalidad</th>
+                  <th class="py-2.5 px-3 min-w-[170px]">Relator/a</th>
+                  <th class="py-2.5 px-2 w-20 text-center">Año</th>
+                  <th class="py-2.5 px-2 w-28 text-center">Mes desde</th>
+                  <th class="py-2.5 px-2 w-28 text-center">Mes hasta</th>
+                  <th class="py-2.5 px-2 w-36 text-center">Fecha definitiva</th>
+                  <th class="py-2.5 px-3 w-32 text-center bg-slate-100/80">Inicio utilizado</th>
+                  <th class="py-2.5 px-2 w-28 text-center bg-slate-100/80">Base</th>
+                  <th class="py-2.5 px-3 min-w-[200px]">Notas</th>
+                  <th class="py-2.5 px-2 w-20 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="programs-tbody" class="divide-y divide-slate-200 text-xs">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subview: Publicaciones Generales -->
+        <div id="subview-generales-table" class="hidden space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs text-slate-600">Agrega efemérides, hitos institucionales u otros contenidos con fecha prevista. Se integran automáticamente a la Panorámica y al Planificador Mensual.</p>
+            <button onclick="openGeneralModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 shadow-sm">
+              + Nueva Publicación General
+            </button>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-2.5 px-3 w-20">ID</th>
+                  <th class="py-2.5 px-3">Título / Contenido</th>
+                  <th class="py-2.5 px-3 w-44">Tipo</th>
+                  <th class="py-2.5 px-3 w-40">Fecha Prevista</th>
+                  <th class="py-2.5 px-3 w-36">Responsable</th>
+                  <th class="py-2.5 px-3 w-36">Canal</th>
+                  <th class="py-2.5 px-3 w-36">Estado</th>
+                  <th class="py-2.5 px-3">Notas</th>
+                  <th class="py-2.5 px-3 w-20 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="generales-tbody" class="divide-y divide-slate-200 text-xs">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Subview: Referencia cursos ya publicados -->
+        <div id="subview-referencias" class="hidden space-y-3">
+          <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4">
+            <h3 class="text-sm font-bold text-indigo-950">Referencia: Cursos ya publicados (Archivo original)</h3>
+            <p class="text-xs text-indigo-800 mt-1">
+              Estos cursos provienen de la columna lateral de referencia en <code>Registro de Cursos</code> que no tenían fecha asignada. Puedes incorporarlos a la planificación activa con un clic.
+            </p>
+            <div id="referencias-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: AGENDA DE PUBLICACIONES -->
+    <section id="view-agenda" class="hidden space-y-4 animate-fade-in">
+      <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Agenda Editorial de Publicaciones</h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Fija una <strong>Fecha editorial</strong> para reemplazar la fecha sugerida por las reglas, o asigna Responsable, Canal y Estado por publicación.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="agenda-filter-origin" onchange="renderAgendaTable()" class="text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-700">
+              <option value="all">Todos los orígenes</option>
+              <option value="Curso">Cursos</option>
+              <option value="Charla">Charlas</option>
+              <option value="General">Generales</option>
+            </select>
+
+            <select id="agenda-filter-status" onchange="renderAgendaTable()" class="text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-700">
+              <option value="all">Todos los estados</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="En preparación">En preparación</option>
+              <option value="Programada">Programada</option>
+              <option value="Publicada">Publicada</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+
+            <select id="agenda-filter-month" onchange="renderAgendaTable()" class="text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-700">
+              <option value="all">Todos los meses</option>
+              <option value="1">Enero</option>
+              <option value="2">Febrero</option>
+              <option value="3">Marzo</option>
+              <option value="4">Abril</option>
+              <option value="5">Mayo</option>
+              <option value="6">Junio</option>
+              <option value="7">Julio</option>
+              <option value="8">Agosto</option>
+              <option value="9">Septiembre</option>
+              <option value="10">Octubre</option>
+              <option value="11">Noviembre</option>
+              <option value="12">Diciembre</option>
+            </select>
+
+            <input type="text" id="agenda-search" oninput="renderAgendaTable()" placeholder="Buscar ID, programa, responsable..." class="text-xs rounded-lg border border-slate-300 px-3 py-1.5 w-52 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse min-w-[1150px]">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <th class="py-2.5 px-3 w-24">ID</th>
+                <th class="py-2.5 px-2 w-24">Origen</th>
+                <th class="py-2.5 px-3 min-w-[220px]">Programa / Contenido</th>
+                <th class="py-2.5 px-3 w-48">Tipo de Publicación</th>
+                <th class="py-2.5 px-3 w-32 text-center bg-slate-100/80">Fecha Sugerida</th>
+                <th class="py-2.5 px-3 w-40 text-center">Fecha Editorial (Prioridad)</th>
+                <th class="py-2.5 px-3 w-32 text-center bg-slate-100/80">Fecha Utilizada</th>
+                <th class="py-2.5 px-3 w-36">Responsable</th>
+                <th class="py-2.5 px-3 w-36">Canal</th>
+                <th class="py-2.5 px-3 w-36">Estado</th>
+                <th class="py-2.5 px-2 w-28 text-center">Base Inicio</th>
+              </tr>
+            </thead>
+            <tbody id="agenda-tbody" class="divide-y divide-slate-200 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: REGLAS E INSTRUCCIONES -->
+    <section id="view-reglas" class="hidden space-y-5 animate-fade-in">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Left: Rules Editor (7 cols) -->
+        <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Reglas de Cálculo Automático</h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Ajusta las semanas de anticipación o desfase. Cualquier cambio recalcula al instante todas las fechas sugeridas del calendario.
+              </p>
+            </div>
+            <button onclick="resetDefaultRules()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-lg hover:bg-indigo-50 transition-all">
+              Restaurar reglas iniciales (9, 13, 5, 1)
+            </button>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                  <th class="py-2.5 px-3">Tipo de Publicación</th>
+                  <th class="py-2.5 px-3 w-28 text-center">Semanas</th>
+                  <th class="py-2.5 px-3 w-48">Referencia de Cálculo</th>
+                  <th class="py-2.5 px-3 w-24 text-center">Activo</th>
+                </tr>
+              </thead>
+              <tbody id="rules-tbody" class="divide-y divide-slate-200 text-xs">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Visual Timeline Simulator -->
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Simulación de Línea de Tiempo por Programa</span>
+              <span class="text-xs text-slate-500">Ejemplo para un inicio el <strong>15 de Agosto de 2027</strong></span>
+            </div>
+            <div id="rules-timeline-preview" class="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Instructions & Hosting Guide (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              ¿Cómo funciona la lógica de fechas?
+            </h3>
+            <ul class="space-y-2 text-xs text-slate-600 leading-relaxed">
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-indigo-600">1.</span>
+                <span><strong>Cálculo de Inicio del Programa:</strong> Si ingresas sólo un mes (ej. Mes desde = 6, Mes hasta = 6), el sistema toma el <strong>día 15 de ese mes</strong>. Si ingresas un rango de meses (ej. Mes 1 a 3), calcula automáticamente el <strong>punto medio exacto</strong> entre el primer día del mes inicial y el último día del mes final.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-indigo-600">2.</span>
+                <span><strong>Fecha Definitiva:</strong> Cuando confirmes el día exacto de inicio de un Curso o Charla, ingrésalo en <em>Fecha definitiva</em>; reemplazará automáticamente la aproximación en todas las vistas.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-indigo-600">3.</span>
+                <span><strong>Prioridad de Fecha Editorial:</strong> En la Agenda o haciendo clic en cualquier publicación puedes fijar una <em>Fecha Editorial</em>. Esta tiene prioridad sobre la fecha calculada por reglas. Si la borras, vuelve a regir la fecha automática.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="font-bold text-indigo-600">4.</span>
+                <span><strong>Anticipaciones en 2026:</strong> Los programas que inician a comienzos de 2027 (como <em>Primeros Auxilios Psicológicos</em>) generan publicaciones en noviembre y diciembre de 2026. Usa el selector superior <strong>Año vista: 2026 / Todos</strong> para revisarlas.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-indigo-950 text-white rounded-xl p-5 shadow-sm space-y-3">
+            <h3 class="text-sm font-bold flex items-center gap-2 text-indigo-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+              ¿Cómo alojar y compartir esta plataforma?
+            </h3>
+            <p class="text-xs text-indigo-100 leading-relaxed">
+              Esta aplicación es un archivo web autónomo (<code>.html</code>) sin dependencias externas de servidor:
+            </p>
+            <ul class="space-y-1.5 text-xs text-indigo-100">
+              <li>• <strong>Alojamiento Web Gratuito:</strong> Puedes subir este archivo directamente a <strong>Netlify Drop</strong> (arrastrando el archivo), <strong>GitHub Pages</strong>, <strong>Vercel</strong> o el servidor/intranet de la universidad.</li>
+              <li>• <strong>Persistencia Automática:</strong> Todos los cambios que realices se guardan al instante en el navegador (<code>localStorage</code>).</li>
+              <li>• <strong>Trabajo en Equipo:</strong> Usa el menú <em>Datos / Exportar → Guardar Respaldo (.JSON)</em> para compartir tu estado actualizado con otros miembros del equipo o exportar la tabla a Excel (<code>.CSV</code>).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: EDIT / ADD PROGRAM (CURSO / CHARLA) -->
+  <div id="modal-program" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden animate-fade-in">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <h3 id="modal-program-title" class="text-sm font-bold text-slate-900">Nuevo Programa</h3>
+        <button onclick="closeProgramModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form id="form-program" onsubmit="saveProgramFromModal(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="prog-edit-id" />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tipo de Programa</label>
+            <select id="prog-origin" onchange="updateSuggestedCode()" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight">
+              <option value="Curso">Curso</option>
+              <option value="Charla">Charla</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Código</label>
+            <input type="text" id="prog-code" required class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono" placeholder="Ej. C-015" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nombre del Programa *</label>
+          <input type="text" id="prog-name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Nombre del curso, diplomado o charla" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Modalidad</label>
+            <select id="prog-modality" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight">
+              <option value="Online">Online</option>
+              <option value="Autoinstruccional">Autoinstruccional</option>
+              <option value="Presencial">Presencial</option>
+              <option value="Híbrido">Híbrido</option>
+              <option value="Por definir">Por definir</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Relator/a(es)</label>
+            <input type="text" id="prog-instructor" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Ej. Carla Mendoza" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 bg-amber-50/60 p-3 rounded-xl border border-amber-200">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Año</label>
+            <input type="number" id="prog-year" value="2027" min="2025" max="2030" required class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 bg-white" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Mes desde (1-12)</label>
+            <select id="prog-month-from" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white">
+              <option value="">Sin definir</option>
+              <option value="1">1 - Enero</option>
+              <option value="2">2 - Febrero</option>
+              <option value="3">3 - Marzo</option>
+              <option value="4">4 - Abril</option>
+              <option value="5">5 - Mayo</option>
+              <option value="6">6 - Junio</option>
+              <option value="7">7 - Julio</option>
+              <option value="8">8 - Agosto</option>
+              <option value="9">9 - Septiembre</option>
+              <option value="10">10 - Octubre</option>
+              <option value="11">11 - Noviembre</option>
+              <option value="12">12 - Diciembre</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Mes hasta (1-12)</label>
+            <select id="prog-month-to" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 bg-white">
+              <option value="">Sin definir</option>
+              <option value="1">1 - Enero</option>
+              <option value="2">2 - Febrero</option>
+              <option value="3">3 - Marzo</option>
+              <option value="4">4 - Abril</option>
+              <option value="5">5 - Mayo</option>
+              <option value="6">6 - Junio</option>
+              <option value="7">7 - Julio</option>
+              <option value="8">8 - Agosto</option>
+              <option value="9">9 - Septiembre</option>
+              <option value="10">10 - Octubre</option>
+              <option value="11">11 - Noviembre</option>
+              <option value="12">12 - Diciembre</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Fecha Definitiva de Inicio (Opcional — reemplaza aproximación)</label>
+          <input type="date" id="prog-def-date" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Notas / Observaciones</label>
+          <textarea id="prog-notes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Notas internas, ajustes de horas, eslogan..."></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+          <button type="button" onclick="closeProgramModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">Guardar Programa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: EDIT PUBLICATION DETAIL & OVERRIDE -->
+  <div id="modal-publication" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden animate-fade-in">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <span id="pub-modal-id" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">C-001-1</span>
+          <h3 id="pub-modal-title" class="text-sm font-bold text-slate-900 mt-1">Detalle de Publicación</h3>
+        </div>
+        <button onclick="closePublicationModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form onsubmit="savePublicationModal(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="pub-modal-key" />
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-1.5">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Tipo de Publicación:</span>
+            <span id="pub-modal-type" class="font-bold text-slate-800"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Inicio del Programa:</span>
+            <span id="pub-modal-prog-start" class="font-semibold text-slate-700"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Fecha Sugerida por Reglas:</span>
+            <span id="pub-modal-suggested" class="font-mono font-bold text-indigo-700"></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-700">Fecha Editorial (Prioridad sobre sugerida)</label>
+            <button type="button" onclick="clearModalEditorialDate()" class="text-[11px] text-indigo-600 hover:underline">Usar fecha sugerida</button>
+          </div>
+          <input type="date" id="pub-modal-editorial" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" />
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Estado</label>
+            <select id="pub-modal-status" class="w-full rounded-lg border border-slate-300 px-2.5 py-2 editable-highlight">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En preparación">En preparación</option>
+              <option value="Programada">Programada</option>
+              <option value="Publicada">Publicada</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Canal</label>
+            <input type="text" id="pub-modal-channel" list="channel-options" class="w-full rounded-lg border border-slate-300 px-2.5 py-2 editable-highlight" placeholder="Ej. Instagram / LinkedIn" />
+            <datalist id="channel-options">
+              <option value="Instagram"></option>
+              <option value="LinkedIn"></option>
+              <option value="Web / Mailing"></option>
+              <option value="Instagram + LinkedIn"></option>
+              <option value="Multicanal"></option>
+              <option value="YouTube / Reels"></option>
+            </datalist>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Responsable</label>
+            <input type="text" id="pub-modal-owner" class="w-full rounded-lg border border-slate-300 px-2.5 py-2 editable-highlight" placeholder="Nombre..." />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-200">
+          <button type="button" id="btn-jump-to-program" onclick="openProgramFromPubModal()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+            ⚙️ Editar parámetros del programa
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closePublicationModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+            <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">Guardar Cambios</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: GENERAL PUBLICATION / EFEMÉRIDE -->
+  <div id="modal-general" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full overflow-hidden animate-fade-in">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <h3 class="text-sm font-bold text-slate-900">Agregar Publicación General / Efeméride</h3>
+        <button onclick="closeGeneralModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form onsubmit="saveGeneralModal(event)" class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="gen-edit-id" />
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Título / Contenido *</label>
+          <input type="text" id="gen-title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Ej. Día Mundial de la Salud Mental" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tipo</label>
+            <select id="gen-type" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight">
+              <option value="Efeméride">Efeméride</option>
+              <option value="Institucional">Institucional</option>
+              <option value="Campaña">Campaña</option>
+              <option value="Comunidad / Alumnos">Comunidad / Alumnos</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Fecha Prevista *</label>
+            <input type="date" id="gen-date" required value="2027-10-10" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Responsable</label>
+            <input type="text" id="gen-owner" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Opcional" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Canal</label>
+            <input type="text" id="gen-channel" list="channel-options" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Ej. Instagram" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Notas</label>
+          <textarea id="gen-notes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 editable-highlight" placeholder="Detalles de la publicación..."></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+          <button type="button" onclick="closeGeneralModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 shadow-sm">Guardar Publicación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: RESET CONFIRMATION -->
+  <div id="modal-reset" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-4 animate-fade-in">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 font-bold">!</div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-900">¿Restaurar datos originales de la planilla 2027?</h3>
+          <p class="text-xs text-slate-600 mt-1">Se restablecerán los 14 cursos, 4 charlas y las reglas de anticipación originales del archivo Excel. Tus cambios personalizados actuales serán reemplazados.</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeResetConfirmModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+        <button onclick="confirmResetAllData()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700">Sí, restaurar original</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: CLOUD SYNC & GITHUB HOSTING CONFIGURATION -->
+  <div id="modal-cloud" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <span>☁️ Sincronización en la Nube para Trabajo en Equipo</span>
+          </h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">Conecta la plataforma alojada en GitHub Pages a un almacenamiento compartido para que todo el equipo vea y edite los mismos datos.</p>
+        </div>
+        <button onclick="closeCloudSyncModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs">
+        <!-- Provider Selector -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">Método de sincronización en la nube</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" id="cloud-tab-github" onclick="setCloudProviderUI('github')" class="p-3 rounded-xl border text-left transition-all">
+              <div class="font-bold text-slate-900">1. GitHub Repo API</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Guarda en <code>datos.json</code> dentro de tu mismo repositorio de GitHub.</div>
+            </button>
+            <button type="button" id="cloud-tab-gas" onclick="setCloudProviderUI('gas')" class="p-3 rounded-xl border text-left transition-all">
+              <div class="font-bold text-slate-900">2. Google Workspace</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Usa Google Drive / Apps Script como base de datos sin tokens para el equipo.</div>
+            </button>
+            <button type="button" id="cloud-tab-rest" onclick="setCloudProviderUI('rest')" class="p-3 rounded-xl border text-left transition-all">
+              <div class="font-bold text-slate-900">3. Firebase / JSON REST</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Conecta cualquier URL Realtime DB (<code>.json</code>) con lectura/escritura.</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel 1: GitHub Contents API -->
+        <div id="cloud-panel-github" class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="text-[11px] text-slate-600 leading-relaxed">
+            <strong>¿Cómo funciona?</strong> Al presionar <em>Publicar</em>, la página guarda un archivo <code>datos.json</code> directamente en tu repositorio de GitHub mediante la API oficial, manteniendo historial de versiones (commits).
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Usuario u Organización de GitHub</label>
+              <input type="text" id="gh-owner" placeholder="Ej. psicologia-utalca" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Nombre del Repositorio</label>
+              <input type="text" id="gh-repo" placeholder="Ej. calendario-publicaciones-2027" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Rama (Branch)</label>
+              <input type="text" id="gh-branch" value="main" placeholder="main" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-mono" />
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Archivo de datos en el repo</label>
+              <input type="text" id="gh-path" value="datos.json" placeholder="datos.json" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-mono" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Token de Acceso de GitHub (Fine-grained PAT con permiso <code>Contents: Read & Write</code>)</label>
+            <input type="password" id="gh-token" placeholder="github_pat_..." class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-mono" />
+            <p class="text-[10px] text-slate-500 mt-1">El token se guarda únicamente en el navegador de cada integrante (nunca se sube al código público).</p>
+          </div>
+        </div>
+
+        <!-- Panel 2: Google Apps Script Web App -->
+        <div id="cloud-panel-gas" class="hidden space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="text-[11px] text-slate-600 leading-relaxed">
+            <strong>Ideal para equipos no técnicos:</strong> Crea un proyecto en <a href="https://script.google.com" target="_blank" rel="noopener" class="text-indigo-600 underline font-semibold">script.google.com</a>, pega el código de abajo, publícalo como <em>Aplicación web (Acceso: Cualquier persona)</em> y pega aquí la URL generada.
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">URL de la Aplicación Web de Google Apps Script</label>
+            <input type="url" id="gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-mono" />
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-slate-700">Código listo para pegar en Google Apps Script (<code>Código.gs</code>):</span>
+              <button type="button" onclick="copyGasSnippet()" class="text-[11px] font-semibold text-indigo-600 hover:underline">Copiar código</button>
+            </div>
+            <pre id="gas-code-snippet" class="bg-slate-900 text-slate-100 p-3 rounded-lg text-[10px] font-mono overflow-x-auto leading-relaxed">function doGet() {
+  var prop = PropertiesService.getScriptProperties().getProperty('CALENDARIO_DATA') || '{}';
+  return ContentService.createTextOutput(prop).setMimeType(ContentService.MimeType.JSON);
+}
+function doPost(e) {
+  PropertiesService.getScriptProperties().setProperty('CALENDARIO_DATA', e.postData.contents);
+  return ContentService.createTextOutput(JSON.stringify({ok: true})).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+          </div>
+        </div>
+
+        <!-- Panel 3: Firebase / Generic REST JSON -->
+        <div id="cloud-panel-rest" class="hidden space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="text-[11px] text-slate-600 leading-relaxed">
+            <strong>Base de datos JSON directa:</strong> Ingresa la URL de tu base de datos en tiempo real (por ejemplo, Firebase Realtime Database terminada en <code>/calendario.json</code>). La app hará <code>GET</code> para leer y <code>PUT</code> para guardar.
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">URL del Endpoint JSON (GET / PUT)</label>
+            <input type="url" id="rest-url" placeholder="https://mi-proyecto-default-rtdb.firebaseio.com/calendario2027.json" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-mono" />
+          </div>
+        </div>
+
+        <!-- Auto-sync toggle -->
+        <div class="flex items-center justify-between bg-indigo-50/60 px-4 py-2.5 rounded-xl border border-indigo-100">
+          <div>
+            <div class="font-semibold text-slate-800">Sincronización automática al editar</div>
+            <div class="text-[11px] text-slate-500">Envía automáticamente cada cambio a la nube además de guardar en este navegador.</div>
+          </div>
+          <input type="checkbox" id="cloud-autosync" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+        </div>
+      </div>
+
+      <div class="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+        <button type="button" onclick="disconnectCloudSync()" class="text-xs font-semibold text-rose-600 hover:underline">
+          Desconectar nube (usar solo modo local)
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeCloudSyncModal()" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200/60">Cerrar</button>
+          <button type="button" onclick="saveCloudConfigAndSync()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">
+            Guardar Configuración y Conectar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+  <script>
+    const MONTH_NAMES = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const MONTH_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    const STORAGE_KEY = 'calendario_publicaciones_2027_v1';
+
+    function getInitialData() {
+      return {
+        rules: [
+          { id: '1', type: 'Presentación del programa', weeks: 9, reference: 'Antes del inicio', active: true },
+          { id: '2', type: 'Publicación técnica', weeks: 13, reference: 'Antes del inicio', active: true },
+          { id: '3', type: 'Publicación con relator/a', weeks: 5, reference: 'Antes del inicio', active: true },
+          { id: '4', type: 'Promocional (vídeo / slides)', weeks: 1, reference: 'Después de presentación', active: true }
+        ],
+        programs: [
+          { code: 'C-001', origin: 'Curso', name: 'Primeros Auxilios Psicológicos', modality: 'Autoinstruccional', instructor: 'Carla Mendoza', year: 2027, monthFrom: 1, monthTo: 3, definitiveDate: '', notes: 'enero/marzo — Disponible todo el año' },
+          { code: 'C-002', origin: 'Curso', name: 'Oratoria y comuniación profesional efectiva', modality: 'Online', instructor: 'Carla Mendoza', year: 2027, monthFrom: 4, monthTo: 5, definitiveDate: '', notes: 'abril/mayo — Subir precio, preguntar a Carla si subimos horas autónomas, quedando en 12 horas totales. Ver distribución de horas de clases.' },
+          { code: 'C-003', origin: 'Curso', name: 'Retroalimentación efectiva', modality: 'Online', instructor: 'Carla Mendoza', year: 2027, monthFrom: 5, monthTo: 6, definitiveDate: '', notes: 'mayo/junio — Subir precio, preguntar a Carla si subimos horas autónomas, quedando en 12 horas totales. Ver distribución de horas de clases.' },
+          { code: 'C-004', origin: 'Curso', name: 'Lecto escritura cientifica/profesional', modality: 'Online', instructor: 'Angel Valenzuela', year: 2027, monthFrom: 6, monthTo: 6, definitiveDate: '', notes: 'junio' },
+          { code: 'C-005', origin: 'Curso', name: 'Selección de Personas', modality: 'Online', instructor: 'Elizabeth Riquelme', year: 2027, monthFrom: 6, monthTo: 6, definitiveDate: '', notes: 'junio — Crearlo' },
+          { code: 'C-006', origin: 'Curso', name: 'Gestión de enfermedades profesionales de salud mental de origen laboral', modality: 'Online', instructor: 'Pilar García', year: 2027, monthFrom: 8, monthTo: 8, definitiveDate: '', notes: 'agosto' },
+          { code: 'C-007', origin: 'Curso', name: 'Diplomado en Evaluación y Tratamiento', modality: 'Online', instructor: 'Nadia Ramos, Andrés Fresno, Rosario Spencer, Carolina Salgado', year: 2027, monthFrom: 8, monthTo: 8, definitiveDate: '', notes: 'agosto' },
+          { code: 'C-008', origin: 'Curso', name: 'Comprensión del trauma', modality: 'Online', instructor: 'Nadia Ramos, Andrés Fresno, Rosario Spencer, Carolina Salgado', year: 2027, monthFrom: 8, monthTo: 8, definitiveDate: '', notes: 'agosto' },
+          { code: 'C-009', origin: 'Curso', name: 'Educación Inclusiva', modality: 'Online', instructor: 'Diana Vásquez', year: 2027, monthFrom: 8, monthTo: 8, definitiveDate: '', notes: 'agosto' },
+          { code: 'C-010', origin: 'Curso', name: 'Evaluacion de tept y tept- c', modality: 'Online', instructor: 'Nadia Ramos, Andrés Fresno, Rosario Spencer, Carolina Salgado', year: 2027, monthFrom: 8, monthTo: 8, definitiveDate: '', notes: 'agosto' },
+          { code: 'C-011', origin: 'Curso', name: 'Tratamiento del trauma, tept y tept-c', modality: 'Online', instructor: 'Nadia Ramos, Andrés Fresno, Rosario Spencer, Carolina Salgado', year: 2027, monthFrom: 10, monthTo: 10, definitiveDate: '', notes: 'octubre' },
+          { code: 'C-012', origin: 'Curso', name: 'Evaluación Neuropsicológica', modality: 'Online', instructor: 'Paula Albornoz', year: 2027, monthFrom: 10, monthTo: 10, definitiveDate: '', notes: 'octubre' },
+          { code: 'C-013', origin: 'Curso', name: 'Psicoterapia Grupal', modality: 'Online', instructor: 'Carlos Chico', year: 2027, monthFrom: 11, monthTo: 11, definitiveDate: '', notes: 'Noviembre' },
+          { code: 'C-014', origin: 'Curso', name: 'Curso Laboral por definir', modality: 'Por definir', instructor: 'Cristian Landsberger', year: 2027, monthFrom: null, monthTo: null, definitiveDate: '', notes: '' },
+          { code: 'CH-001', origin: 'Charla', name: 'Charla Diplomado', modality: 'Online', instructor: '', year: 2027, monthFrom: 5, monthTo: 5, definitiveDate: '', notes: 'mayo — Utilizar esloga de la Universidad INSPIRA, INNOVA, IMPACTA como elemento comunicacional de las gráficas' },
+          { code: 'CH-002', origin: 'Charla', name: 'Charla Educación Inclusiva / convivencia', modality: 'Online', instructor: '', year: 2027, monthFrom: 7, monthTo: 7, definitiveDate: '', notes: 'fines julio — Anclar recursos profesionales para descargar en la página web' },
+          { code: 'CH-003', origin: 'Charla', name: 'Charla Laboral', modality: 'Online', instructor: '', year: 2027, monthFrom: 5, monthTo: 5, definitiveDate: '', notes: 'mayo' },
+          { code: 'CH-004', origin: 'Charla', name: 'Charla Clínica', modality: 'Online', instructor: '', year: 2027, monthFrom: 9, monthTo: 9, definitiveDate: '', notes: 'finales SEPT' }
+        ],
+        generales: [],
+        overrides: {},
+        referenceCourses: [
+          'Primeros Auxilios Psicológicos en Contextos de Crisis.',
+          'Redes de Salud Mental.',
+          'Técnicas de Regulación Emocional para el Trabajo con Pacientes.',
+          'Salud Mental Posparto: Bases para la Comprensión y Apoyo de la Díada.',
+          'Gamificación Aplicada a la Metodología CEAL-SM.',
+          'Ley Karin'
+        ]
+      };
+    }
+
+    let state = {
+      activeTab: 'panoramica',
+      globalYear: 2027,
+      panoramicaMode: 'grouped',
+      programSubtab: 'cursos',
+      plannerYear: 2027,
+      plannerMonth: 4,
+      data: getInitialData()
+    };
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.rules && parsed.programs) {
+            state.data = parsed;
+          }
+        }
+      } catch (e) {
+        console.warn('LocalStorage no disponible:', e);
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+        const badge = document.getElementById('save-status-badge');
+        if (badge) {
+          badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Guardado ' + new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        }
+        if (typeof cloudConfig !== 'undefined' && cloudConfig.enabled && cloudConfig.autoSync) {
+          pushToCloud(true);
+        }
+      } catch (e) {
+        console.warn('No se pudo guardar en localStorage:', e);
+      }
+    }
+
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = type === 'success'
+        ? 'bg-slate-900 text-white border-slate-700'
+        : 'bg-amber-600 text-white border-amber-500';
+      el.className = `px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium flex items-center gap-2 animate-fade-in ${colors}`;
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${msg}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.remove();
+      }, 3000);
+    }
+
+    // --- EXCEL DATE ENGINE (Exact match to Excel DATE & INT formulas) ---
+    function parseISOToUTC(isoStr) {
+      if (!isoStr || typeof isoStr !== 'string') return null;
+      const parts = isoStr.trim().split('-');
+      if (parts.length !== 3) return null;
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+      return new Date(Date.UTC(y, m - 1, d));
+    }
+
+    function formatUTCToISO(dateObj) {
+      if (!dateObj || isNaN(dateObj.getTime())) return '';
+      const y = dateObj.getUTCFullYear();
+      const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatISOToHuman(isoStr) {
+      if (!isoStr) return 'Sin fecha';
+      const d = parseISOToUTC(isoStr);
+      if (!d) return 'Sin fecha';
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const mon = MONTH_SHORT[d.getUTCMonth()];
+      const yr = d.getUTCFullYear();
+      return `${day} ${mon} ${yr}`;
+    }
+
+    function addDaysUTC(isoStr, days) {
+      const d = parseISOToUTC(isoStr);
+      if (!d) return '';
+      const ms = d.getTime() + days * 86400000;
+      return formatUTCToISO(new Date(ms));
+    }
+
+    // Replicates Excel formula:
+    // =IF(B6="","",IF(H6<>"",H6,IF(OR(F6="",G6=""),"",IF(F6=G6,DATE(E6,F6,15),INT((DATE(E6,F6,1)+DATE(E6,G6+1,0))/2)))))
+    function computeProgramStart(prog) {
+      if (!prog || !prog.name || !prog.name.trim()) {
+        return { usedStart: '', baseType: 'Sin fecha' };
+      }
+      if (prog.definitiveDate && prog.definitiveDate.trim() !== '') {
+        return { usedStart: prog.definitiveDate.trim(), baseType: 'Definitiva' };
+      }
+      const mFrom = parseInt(prog.monthFrom, 10);
+      const mTo = parseInt(prog.monthTo, 10);
+      const yr = parseInt(prog.year, 10) || 2027;
+      if (isNaN(mFrom) || isNaN(mTo) || mFrom < 1 || mFrom > 12 || mTo < 1 || mTo > 12) {
+        return { usedStart: '', baseType: 'Sin fecha' };
+      }
+      if (mFrom === mTo) {
+        const dt = new Date(Date.UTC(yr, mFrom - 1, 15));
+        return { usedStart: formatUTCToISO(dt), baseType: 'Aproximada' };
+      }
+      // Midpoint between first day of mFrom and last day of mTo
+      const startMs = Date.UTC(yr, mFrom - 1, 1);
+      const endMs = Date.UTC(yr, mTo, 0); // Day 0 of mTo+1 is last day of mTo
+      const diffDays = Math.round((endMs - startMs) / 86400000);
+      const halfDays = Math.floor(diffDays / 2);
+      const midDate = new Date(startMs + halfDays * 86400000);
+      return { usedStart: formatUTCToISO(midDate), baseType: 'Aproximada' };
+    }
+
+    // Generates the complete list of publications (Cursos + Charlas + Generales)
+    function computeAllPublications() {
+      const list = [];
+      const rules = state.data.rules;
+
+      for (const prog of state.data.programs) {
+        if (!prog.name || !prog.name.trim()) continue;
+        const { usedStart, baseType } = computeProgramStart(prog);
+
+        // First compute Rule 1 (Presentación del programa) so Rule 4 ("Después de presentación") can reference it
+        const rule1 = rules[0];
+        const r1Key = `${prog.code}-1`;
+        const r1Override = state.data.overrides[r1Key] || {};
+        let r1Suggested = '';
+        if (usedStart && rule1 && rule1.active) {
+          const factor = rule1.reference === 'Después del inicio' ? 1 : -1;
+          r1Suggested = addDaysUTC(usedStart, factor * (parseFloat(rule1.weeks) || 0) * 7);
+        }
+        const r1EffectiveForPromo = (r1Override.editorialDate && r1Override.editorialDate !== '')
+          ? r1Override.editorialDate
+          : r1Suggested;
+
+        rules.forEach((rule, idx) => {
+          const pubId = `${prog.code}-${idx + 1}`;
+          const ov = state.data.overrides[pubId] || {};
+          let suggestedDate = '';
+
+          if (usedStart && rule.active) {
+            const wks = parseFloat(rule.weeks) || 0;
+            if (rule.reference === 'Antes del inicio') {
+              suggestedDate = addDaysUTC(usedStart, -wks * 7);
+            } else if (rule.reference === 'Después del inicio') {
+              suggestedDate = addDaysUTC(usedStart, wks * 7);
+            } else if (rule.reference === 'Después de presentación') {
+              if (r1EffectiveForPromo) {
+                suggestedDate = addDaysUTC(r1EffectiveForPromo, wks * 7);
+              }
+            }
+          }
+
+          const editorialDate = ov.editorialDate || '';
+          const status = ov.status || 'Pendiente';
+          const usedDate = (status === 'Cancelada')
+            ? ''
+            : (editorialDate !== '' ? editorialDate : suggestedDate);
+
+          list.push({
+            id: pubId,
+            programCode: prog.code,
+            origin: prog.origin,
+            programName: prog.name,
+            instructor: prog.instructor || '',
+            modality: prog.modality || '',
+            ruleId: rule.id,
+            type: rule.type,
+            ruleActive: rule.active,
+            suggestedDate,
+            editorialDate,
+            usedDate,
+            owner: ov.owner || '',
+            channel: ov.channel || '',
+            status,
+            baseType,
+            programStart: usedStart
+          });
+        });
+      }
+
+      // Add General Publications
+      state.data.generales.forEach((gen) => {
+        if (!gen.title || !gen.title.trim()) return;
+        const ov = state.data.overrides[gen.id] || {};
+        const suggestedDate = gen.date || '';
+        const editorialDate = ov.editorialDate || '';
+        const status = ov.status || gen.status || 'Pendiente';
+        const usedDate = (status === 'Cancelada')
+          ? ''
+          : (editorialDate !== '' ? editorialDate : suggestedDate);
+
+        list.push({
+          id: gen.id,
+          programCode: gen.id,
+          origin: 'General',
+          programName: gen.title,
+          instructor: '',
+          modality: '',
+          ruleId: 'G',
+          type: gen.type || 'Efeméride',
+          ruleActive: true,
+          suggestedDate,
+          editorialDate,
+          usedDate,
+          owner: ov.owner || gen.owner || '',
+          channel: ov.channel || gen.channel || '',
+          status,
+          baseType: 'Definitiva',
+          programStart: suggestedDate
+        });
+      });
+
+      return list;
+    }
+
+    function getBadgeStyleForType(type) {
+      if (type.includes('técnica')) {
+        return {
+          bg: 'bg-sky-50 hover:bg-sky-100',
+          text: 'text-sky-800',
+          border: 'border-sky-200',
+          dot: 'bg-sky-500',
+          short: 'Técnica'
+        };
+      }
+      if (type.includes('Presentación')) {
+        return {
+          bg: 'bg-indigo-50 hover:bg-indigo-100',
+          text: 'text-indigo-800',
+          border: 'border-indigo-200',
+          dot: 'bg-indigo-600',
+          short: 'Presentación'
+        };
+      }
+      if (type.includes('Promocional')) {
+        return {
+          bg: 'bg-amber-50 hover:bg-amber-100',
+          text: 'text-amber-900',
+          border: 'border-amber-200',
+          dot: 'bg-amber-500',
+          short: 'Promo'
+        };
+      }
+      if (type.includes('relator')) {
+        return {
+          bg: 'bg-emerald-50 hover:bg-emerald-100',
+          text: 'text-emerald-800',
+          border: 'border-emerald-200',
+          dot: 'bg-emerald-500',
+          short: 'Relator/a'
+        };
+      }
+      return {
+        bg: 'bg-rose-50 hover:bg-rose-100',
+        text: 'text-rose-800',
+        border: 'border-rose-200',
+        dot: 'bg-rose-500',
+        short: type
+      };
+    }
+
+    // --- GLOBAL RENDER ORCHESTRATOR ---
+    function renderAll() {
+      updateYearButtonsUI();
+      updateTabsUI();
+      renderKPIs();
+      updateLegendWeeks();
+      renderPanoramica();
+      renderMonthlyPlanner();
+      renderProgramsTable();
+      renderGeneralesTable();
+      renderReferenciasList();
+      renderAgendaTable();
+      renderRulesTable();
+    }
+
+    function updateYearButtonsUI() {
+      const y = state.globalYear;
+      ['2026', '2027', 'all'].forEach(val => {
+        const btn = document.getElementById(`btn-year-${val}`);
+        if (!btn) return;
+        if (String(y) === val) {
+          btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold transition-all bg-indigo-600 text-white shadow-xs';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold transition-all text-slate-600 hover:text-slate-900';
+        }
+      });
+      const badge = document.getElementById('panoramica-year-badge');
+      if (badge) {
+        badge.textContent = y === 'all' ? '2026–2027 (Todos)' : String(y);
+      }
+    }
+
+    function setGlobalYear(yr) {
+      state.globalYear = yr;
+      if (yr === 2026 || yr === 2027) {
+        state.plannerYear = yr;
+        const sel = document.getElementById('planner-year-select');
+        if (sel) sel.value = String(yr);
+      }
+      renderAll();
+    }
+
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      ['panoramica', 'mensual', 'programas', 'agenda', 'reglas'].forEach(t => {
+        const sec = document.getElementById(`view-${t}`);
+        if (sec) {
+          sec.classList.toggle('hidden', t !== tabId);
+        }
+      });
+      updateTabsUI();
+    }
+
+    function updateTabsUI() {
+      ['panoramica', 'mensual', 'programas', 'agenda', 'reglas'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (!btn) return;
+        if (state.activeTab === t) {
+          btn.className = 'tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 bg-white transition-all whitespace-nowrap flex items-center gap-2';
+        } else {
+          btn.className = 'tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all whitespace-nowrap flex items-center gap-2';
+        }
+      });
+    }
+
+    function updateLegendWeeks() {
+      const rules = state.data.rules;
+      if (rules[0]) document.getElementById('legend-weeks-R1').textContent = rules[0].weeks;
+      if (rules[1]) document.getElementById('legend-weeks-R2').textContent = rules[1].weeks;
+      if (rules[2]) document.getElementById('legend-weeks-R3').textContent = rules[2].weeks;
+      if (rules[3]) document.getElementById('legend-weeks-R4').textContent = rules[3].weeks;
+    }
+
+    function renderKPIs() {
+      const progs = state.data.programs.filter(p => p.name && p.name.trim() !== '');
+      const cursos = progs.filter(p => p.origin === 'Curso');
+      const charlas = progs.filter(p => p.origin === 'Charla');
+
+      let defCount = 0;
+      let approxCount = 0;
+      let withStartCursos = 0;
+      progs.forEach(p => {
+        const { usedStart, baseType } = computeProgramStart(p);
+        if (baseType === 'Definitiva') defCount++;
+        if (baseType === 'Aproximada') approxCount++;
+        if (p.origin === 'Curso' && usedStart) withStartCursos++;
+      });
+
+      const allPubs = computeAllPublications().filter(p => p.usedDate !== '');
+      const filteredYearPubs = state.globalYear === 'all'
+        ? allPubs
+        : allPubs.filter(p => p.usedDate.startsWith(String(state.globalYear)));
+
+      const editorialCount = allPubs.filter(p => p.editorialDate && p.editorialDate !== '').length;
+
+      // Peak month calculation in selected year (or 2027 if 'all')
+      const targetYear = state.globalYear === 'all' ? 2027 : state.globalYear;
+      const monthCounts = Array(12).fill(0);
+      allPubs.forEach(p => {
+        const dt = parseISOToUTC(p.usedDate);
+        if (dt && dt.getUTCFullYear() === targetYear) {
+          monthCounts[dt.getUTCMonth()]++;
+        }
+      });
+      let maxCount = 0;
+      let maxMonthIdx = -1;
+      monthCounts.forEach((c, idx) => {
+        if (c > maxCount) {
+          maxCount = c;
+          maxMonthIdx = idx;
+        }
+      });
+
+      document.getElementById('kpi-cursos-count').textContent = cursos.length;
+      document.getElementById('kpi-cursos-sub').textContent = `${withStartCursos} con fecha`;
+      document.getElementById('kpi-charlas-count').textContent = charlas.length;
+      document.getElementById('kpi-charlas-sub').textContent = `${ state.data.generales.length } efemérides`;
+
+      document.getElementById('kpi-pubs-year-label').textContent = state.globalYear === 'all'
+        ? 'Publicaciones (Total)'
+        : `Publicaciones (${state.globalYear})`;
+      document.getElementById('kpi-pubs-year').textContent = filteredYearPubs.length;
+      document.getElementById('kpi-pubs-total-sub').textContent = `de ${allPubs.length} activas`;
+
+      document.getElementById('kpi-definitivas').textContent = defCount;
+      document.getElementById('kpi-aproximadas-sub').textContent = `${approxCount} aproximadas`;
+      document.getElementById('kpi-editoriales').textContent = editorialCount;
+
+      document.getElementById('kpi-peak-month').textContent = maxMonthIdx >= 0 ? `${MONTH_NAMES[maxMonthIdx]} ${targetYear}` : 'Sin datos';
+      document.getElementById('kpi-peak-count').textContent = maxCount > 0 ? `(${maxCount} pubs)` : '';
+
+      document.getElementById('subtab-count-cursos').textContent = cursos.length;
+      document.getElementById('subtab-count-charlas').textContent = charlas.length;
+      document.getElementById('subtab-count-generales').textContent = state.data.generales.length;
+    }
+
+    // --- TAB 1: PANORÁMICA ANUAL ---
+    function setPanoramicaMode(mode) {
+      state.panoramicaMode = mode;
+      const btnGrouped = document.getElementById('btn-pano-grouped');
+      const btnRows = document.getElementById('btn-pano-rows');
+      if (mode === 'grouped') {
+        btnGrouped.className = 'px-3 py-1 rounded-md text-xs font-semibold transition-all bg-white text-slate-900 shadow-sm';
+        btnRows.className = 'px-3 py-1 rounded-md text-xs font-semibold transition-all text-slate-600';
+      } else {
+        btnRows.className = 'px-3 py-1 rounded-md text-xs font-semibold transition-all bg-white text-slate-900 shadow-sm';
+        btnGrouped.className = 'px-3 py-1 rounded-md text-xs font-semibold transition-all text-slate-600';
+      }
+      renderPanoramica();
+    }
+
+    function renderPanoramica() {
+      const theadRow = document.getElementById('panoramica-thead-row');
+      const tbody = document.getElementById('panoramica-tbody');
+      if (!theadRow || !tbody) return;
+
+      const filterOrigin = document.getElementById('pano-filter-origin').value;
+      const filterType = document.getElementById('pano-filter-type').value;
+      const searchQ = (document.getElementById('pano-search').value || '').toLowerCase().trim();
+      const targetYear = state.globalYear;
+
+      const allPubs = computeAllPublications();
+
+      if (state.panoramicaMode === 'grouped') {
+        theadRow.innerHTML = `
+          <th class="py-2.5 px-3 min-w-[230px] sticky left-0 bg-slate-50 z-10 border-r border-slate-200">Programa / Contenido</th>
+          <th class="py-2.5 px-2 w-28 text-center border-r border-slate-200">Inicio</th>
+          ${MONTH_SHORT.map(m => `<th class="py-2.5 px-1.5 text-center w-20">${m}</th>`).join('')}
+        `;
+
+        // Group by program
+        const items = [];
+        state.data.programs.forEach(prog => {
+          if (!prog.name || !prog.name.trim()) return;
+          if (filterOrigin !== 'all' && prog.origin !== filterOrigin) return;
+          if (searchQ && !prog.name.toLowerCase().includes(searchQ) && !(prog.instructor || '').toLowerCase().includes(searchQ) && !prog.code.toLowerCase().includes(searchQ)) return;
+          const { usedStart, baseType } = computeProgramStart(prog);
+          const progPubs = allPubs.filter(p => p.programCode === prog.code && (filterType === 'all' || p.type === filterType));
+          items.push({
+            code: prog.code,
+            origin: prog.origin,
+            name: prog.name,
+            instructor: prog.instructor,
+            usedStart,
+            baseType,
+            pubs: progPubs
+          });
+        });
+
+        state.data.generales.forEach(gen => {
+          if (!gen.title || !gen.title.trim()) return;
+          if (filterOrigin !== 'all' && filterOrigin !== 'General') return;
+          if (searchQ && !gen.title.toLowerCase().includes(searchQ)) return;
+          const genPubs = allPubs.filter(p => p.programCode === gen.id && (filterType === 'all' || p.type === filterType));
+          items.push({
+            code: gen.id,
+            origin: 'General',
+            name: gen.title,
+            instructor: gen.type || 'Efeméride',
+            usedStart: gen.date,
+            baseType: 'Definitiva',
+            pubs: genPubs
+          });
+        });
+
+        if (items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="14" class="py-8 text-center text-slate-400">No se encontraron programas con los filtros actuales.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = items.map(item => {
+          const originBadge = item.origin === 'Curso'
+            ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200">Curso</span>'
+            : (item.origin === 'Charla'
+              ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-purple-50 text-purple-700 border border-purple-200">Charla</span>'
+              : '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-rose-50 text-rose-700 border border-rose-200">General</span>');
+
+          const startDt = parseISOToUTC(item.usedStart);
+          const startMonth = startDt ? startDt.getUTCMonth() : -1;
+          const startYear = startDt ? startDt.getUTCFullYear() : -1;
+          const startDay = startDt ? startDt.getUTCDate() : '';
+
+          const monthCells = Array.from({ length: 12 }, (_, mIdx) => {
+            const cellPubs = item.pubs.filter(p => {
+              if (!p.usedDate) return false;
+              const d = parseISOToUTC(p.usedDate);
+              if (!d) return false;
+              if (targetYear !== 'all' && d.getUTCFullYear() !== targetYear) return false;
+              return d.getUTCMonth() === mIdx;
+            });
+
+            const showStartMarker = startDt && startMonth === mIdx && (targetYear === 'all' || startYear === targetYear) && item.origin !== 'General';
+
+            const pubChips = cellPubs.map(p => {
+              const d = parseISOToUTC(p.usedDate);
+              const dayNum = d.getUTCDate();
+              const yrSuffix = targetYear === 'all' ? ` '${String(d.getUTCFullYear()).slice(-2)}` : '';
+              const st = getBadgeStyleForType(p.type);
+              const edRing = p.editorialDate ? 'ring-2 ring-amber-400' : '';
+              return `
+                <button onclick="openPublicationModal('${p.id}')" title="${p.type}: ${formatISOToHuman(p.usedDate)} (${p.status})"
+                  class="w-full text-left px-1.5 py-1 rounded border ${st.bg} ${st.text} ${st.border} ${edRing} flex items-center justify-between gap-1 text-[11px] font-medium transition-all">
+                  <span class="truncate">${st.short}</span>
+                  <span class="font-bold font-mono shrink-0">${dayNum}${yrSuffix}</span>
+                </button>
+              `;
+            }).join('');
+
+            const startBadge = showStartMarker ? `
+              <button onclick="editProgramByCode('${item.code}')" title="Inicio del programa: ${formatISOToHuman(item.usedStart)} (${item.baseType})"
+                class="w-full text-left px-1.5 py-0.5 rounded bg-slate-800 text-white flex items-center justify-between text-[10px] font-semibold">
+                <span>🎓 Inicio</span>
+                <span class="font-mono">${startDay}</span>
+              </button>
+            ` : '';
+
+            return `<td class="p-1.5 align-top border-r border-slate-100 space-y-1">${pubChips}${startBadge}</td>`;
+          }).join('');
+
+          return `
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <td class="py-2.5 px-3 sticky left-0 bg-white z-10 border-r border-slate-200">
+                <div class="flex items-center justify-between gap-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono text-[11px] text-slate-400">${item.code}</span>
+                    ${originBadge}
+                  </div>
+                  <button onclick="editProgramByCode('${item.code}')" class="text-[11px] text-indigo-600 hover:underline font-medium">Editar</button>
+                </div>
+                <div class="font-semibold text-slate-900 mt-0.5 leading-snug">${item.name}</div>
+                ${item.instructor ? `<div class="text-[11px] text-slate-500 truncate">${item.instructor}</div>` : ''}
+              </td>
+              <td class="py-2.5 px-2 text-center border-r border-slate-200 align-middle">
+                <div class="font-mono text-[11px] font-semibold text-slate-800">${formatISOToHuman(item.usedStart)}</div>
+                <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-medium ${item.baseType === 'Definitiva' ? 'bg-emerald-50 text-emerald-700' : (item.baseType === 'Aproximada' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500')}">${item.baseType}</span>
+              </td>
+              ${monthCells}
+            </tr>
+          `;
+        }).join('');
+
+      } else {
+        // Detailed row-per-publication mode (Exact replica of Panorámica Anual 2027 Excel sheet)
+        theadRow.innerHTML = `
+          <th class="py-2.5 px-3 min-w-[230px] sticky left-0 bg-slate-50 z-10 border-r border-slate-200">Programa / Contenido</th>
+          <th class="py-2.5 px-3 w-48 border-r border-slate-200">Tipo de Publicación</th>
+          ${MONTH_SHORT.map(m => `<th class="py-2.5 px-1.5 text-center w-16">${m}</th>`).join('')}
+        `;
+
+        const filteredPubs = allPubs.filter(p => {
+          if (filterOrigin !== 'all' && p.origin !== filterOrigin) return false;
+          if (filterType !== 'all' && p.type !== filterType) return false;
+          if (searchQ && !p.programName.toLowerCase().includes(searchQ) && !p.instructor.toLowerCase().includes(searchQ) && !p.id.toLowerCase().includes(searchQ)) return false;
+          return true;
+        });
+
+        tbody.innerHTML = filteredPubs.map(p => {
+          const st = getBadgeStyleForType(p.type);
+          const dt = parseISOToUTC(p.usedDate);
+          const pubYear = dt ? dt.getUTCFullYear() : -1;
+          const pubMonth = dt ? dt.getUTCMonth() : -1;
+          const pubDay = dt ? dt.getUTCDate() : '';
+
+          const monthCols = Array.from({ length: 12 }, (_, mIdx) => {
+            const match = dt && pubMonth === mIdx && (targetYear === 'all' || pubYear === targetYear);
+            if (!match) return `<td class="py-2 px-1 text-center border-r border-slate-100"></td>`;
+            return `
+              <td class="py-1.5 px-1 text-center border-r border-slate-100">
+                <button onclick="openPublicationModal('${p.id}')" class="w-8 h-7 mx-auto rounded-lg font-mono font-bold text-xs ${st.bg} ${st.text} border ${st.border} flex items-center justify-center shadow-2xs">
+                  ${pubDay}
+                </button>
+              </td>
+            `;
+          }).join('');
+
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-2 px-3 font-medium text-slate-900 sticky left-0 bg-white border-r border-slate-200">${p.programName}</td>
+              <td class="py-2 px-3 border-r border-slate-200">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${st.bg} ${st.text} border ${st.border}">
+                  <span class="w-1.5 h-1.5 rounded-full ${st.dot}"></span> ${p.type}
+                </span>
+              </td>
+              ${monthCols}
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // --- TAB 2: PLANIFICADOR MENSUAL ---
+    function onPlannerDateSelect() {
+      const y = parseInt(document.getElementById('planner-year-select').value, 10) || 2027;
+      const m = parseInt(document.getElementById('planner-month-select').value, 10) || 4;
+      state.plannerYear = y;
+      state.plannerMonth = m;
+      renderMonthlyPlanner();
+    }
+
+    function changePlannerMonth(delta) {
+      let y = state.plannerYear;
+      let m = state.plannerMonth + delta;
+      if (m < 1) { m = 12; y--; }
+      if (m > 12) { m = 1; y++; }
+      state.plannerYear = y;
+      state.plannerMonth = m;
+      document.getElementById('planner-year-select').value = String(y);
+      document.getElementById('planner-month-select').value = String(m);
+      renderMonthlyPlanner();
+    }
+
+    function selectPlannerMonthDirect(m) {
+      state.plannerMonth = m;
+      document.getElementById('planner-month-select').value = String(m);
+      renderMonthlyPlanner();
+    }
+
+    function renderMonthlyPlanner() {
+      const y = state.plannerYear;
+      const m = state.plannerMonth; // 1..12
+      const allPubs = computeAllPublications().filter(p => p.usedDate !== '');
+
+      // Render 12-month quick bar with counts for plannerYear
+      const strip = document.getElementById('planner-months-strip');
+      if (strip) {
+        strip.innerHTML = MONTH_SHORT.map((mName, idx) => {
+          const mNum = idx + 1;
+          const count = allPubs.filter(p => {
+            const d = parseISOToUTC(p.usedDate);
+            return d && d.getUTCFullYear() === y && (d.getUTCMonth() + 1) === mNum;
+          }).length;
+          const active = mNum === m;
+          return `
+            <button onclick="selectPlannerMonthDirect(${mNum})"
+              class="px-2.5 py-2 rounded-xl border text-left transition-all flex items-center justify-between ${active ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 hover:bg-white text-slate-700 border-slate-200'}">
+              <span class="text-xs font-bold">${mName}</span>
+              <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold ${active ? 'bg-indigo-500 text-white' : (count > 0 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-500')}">${count}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('calendar-grid-title').textContent = `Calendario Visual — ${MONTH_NAMES[m - 1]} ${y}`;
+
+      const monthPubs = allPubs.filter(p => {
+        const d = parseISOToUTC(p.usedDate);
+        return d && d.getUTCFullYear() === y && (d.getUTCMonth() + 1) === m;
+      }).sort((a, b) => a.usedDate.localeCompare(b.usedDate) || a.id.localeCompare(b.id));
+
+      // Also check program starts in this month
+      const monthStarts = [];
+      state.data.programs.forEach(prog => {
+        if (!prog.name || !prog.name.trim()) return;
+        const { usedStart, baseType } = computeProgramStart(prog);
+        const d = parseISOToUTC(usedStart);
+        if (d && d.getUTCFullYear() === y && (d.getUTCMonth() + 1) === m) {
+          monthStarts.push({ prog, day: d.getUTCDate(), usedStart, baseType });
+        }
+      });
+
+      // Build Calendar Grid (Monday = 0 ... Sunday = 6)
+      const firstDayUTC = new Date(Date.UTC(y, m - 1, 1));
+      const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      const jsDay = firstDayUTC.getUTCDay(); // 0=Sun..6=Sat
+      const startOffset = (jsDay + 6) % 7; // Monday=0..Sunday=6
+
+      const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+      const cellsHtml = [];
+
+      for (let i = 0; i < totalCells; i++) {
+        const dayNum = i - startOffset + 1;
+        if (dayNum < 1 || dayNum > daysInMonth) {
+          cellsHtml.push(`<div class="bg-slate-50/70 min-h-[95px] p-1.5"></div>`);
+          continue;
+        }
+        const dayPubs = monthPubs.filter(p => parseISOToUTC(p.usedDate).getUTCDate() === dayNum);
+        const dayStarts = monthStarts.filter(s => s.day === dayNum);
+
+        const pubItemsHtml = dayPubs.map(p => {
+          const st = getBadgeStyleForType(p.type);
+          return `
+            <button onclick="openPublicationModal('${p.id}')"
+              class="w-full text-left px-1.5 py-1 rounded text-[10px] leading-tight font-medium border ${st.bg} ${st.text} ${st.border} truncate block hover:shadow-xs transition-all"
+              title="${p.programName} — ${p.type}">
+              <span class="font-bold">${st.short}:</span> ${p.programName}
+            </button>
+          `;
+        }).join('');
+
+        const startItemsHtml = dayStarts.map(s => `
+          <button onclick="editProgramByCode('${s.prog.code}')"
+            class="w-full text-left px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold bg-slate-800 text-white truncate block"
+            title="Inicio de ${s.prog.name} (${s.baseType})">
+            🎓 Inicio: ${s.prog.name}
+          </button>
+        `).join('');
+
+        cellsHtml.push(`
+          <div class="bg-white min-h-[98px] p-1.5 flex flex-col justify-between hover:bg-slate-50/50 transition-colors">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold ${dayPubs.length > 0 ? 'text-indigo-700' : 'text-slate-500'}">${dayNum}</span>
+              ${dayPubs.length > 0 ? `<span class="text-[10px] px-1 rounded bg-slate-100 text-slate-600 font-mono">${dayPubs.length}</span>` : ''}
+            </div>
+            <div class="space-y-1 my-1">
+              ${pubItemsHtml}
+              ${startItemsHtml}
+            </div>
+            <div></div>
+          </div>
+        `);
+      }
+
+      document.getElementById('calendar-grid-cells').innerHTML = cellsHtml.join('');
+      document.getElementById('planner-list-count').textContent = `${monthPubs.length} publicaciones`;
+
+      const listContainer = document.getElementById('planner-chronological-list');
+      if (monthPubs.length === 0) {
+        listContainer.innerHTML = `
+          <div class="border border-dashed border-slate-300 rounded-xl p-8 text-center text-xs text-slate-500">
+            No hay publicaciones programadas para ${MONTH_NAMES[m - 1]} ${y}.
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = monthPubs.map(p => {
+        const st = getBadgeStyleForType(p.type);
+        return `
+          <div class="bg-slate-50/80 hover:bg-white rounded-xl p-3 border border-slate-200 shadow-2xs transition-all space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono text-[11px] font-bold text-slate-500">${p.id}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white border border-slate-200 text-slate-700">${p.origin}</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${st.bg} ${st.text} ${st.border}">${p.type}</span>
+                </div>
+                <h4 class="text-xs font-bold text-slate-900 mt-1">${p.programName}</h4>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-xs font-mono font-bold text-indigo-700">${formatISOToHuman(p.usedDate)}</div>
+                <div class="text-[10px] text-slate-500">Base: ${p.baseType}</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/70 text-[11px]">
+              <div>
+                <label class="block text-[10px] text-slate-500">Fecha Editorial</label>
+                <input type="date" value="${p.editorialDate}" onchange="updatePublicationOverride('${p.id}', 'editorialDate', this.value)"
+                  class="w-full rounded border border-slate-300 px-1.5 py-1 text-[11px] editable-highlight" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-500">Canal</label>
+                <input type="text" value="${p.channel}" list="channel-options" placeholder="Canal..." onchange="updatePublicationOverride('${p.id}', 'channel', this.value)"
+                  class="w-full rounded border border-slate-300 px-1.5 py-1 text-[11px] editable-highlight" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-500">Estado</label>
+                <select onchange="updatePublicationOverride('${p.id}', 'status', this.value)"
+                  class="w-full rounded border border-slate-300 px-1.5 py-1 text-[11px] editable-highlight">
+                  ${['Pendiente', 'En preparación', 'Programada', 'Publicada', 'Cancelada'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- TAB 3: PROGRAMAS Y PARÁMETROS ---
+    function switchProgramSubtab(sub) {
+      state.programSubtab = sub;
+      ['cursos', 'charlas', 'generales', 'referencias'].forEach(k => {
+        const btn = document.getElementById(`subtab-${k}`);
+        if (!btn) return;
+        if (k === sub) {
+          btn.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-sm transition-all';
+        } else {
+          btn.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all';
+        }
+      });
+
+      document.getElementById('subview-programs-table').classList.toggle('hidden', sub !== 'cursos' && sub !== 'charlas');
+      document.getElementById('subview-generales-table').classList.toggle('hidden', sub !== 'generales');
+      document.getElementById('subview-referencias').classList.toggle('hidden', sub !== 'referencias');
+
+      if (sub === 'cursos' || sub === 'charlas') {
+        renderProgramsTable();
+      } else if (sub === 'generales') {
+        renderGeneralesTable();
+      } else if (sub === 'referencias') {
+        renderReferenciasList();
+      }
+    }
+
+    function renderProgramsTable() {
+      const tbody = document.getElementById('programs-tbody');
+      if (!tbody) return;
+      const targetOrigin = state.programSubtab === 'charlas' ? 'Charla' : 'Curso';
+      const q = (document.getElementById('programs-search').value || '').toLowerCase().trim();
+
+      const rows = state.data.programs.filter(p => {
+        if (p.origin !== targetOrigin) return false;
+        if (q && !(p.name || '').toLowerCase().includes(q) && !(p.instructor || '').toLowerCase().includes(q) && !p.code.toLowerCase().includes(q) && !(p.notes || '').toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-400">No hay registros que coincidan con el filtro.</td></tr>`;
+        return;
+      }
+
+      const monthOptions = (selectedVal) => {
+        return `<option value="">-</option>` + MONTH_NAMES.map((mName, idx) => {
+          const val = idx + 1;
+          const sel = Number(selectedVal) === val ? 'selected' : '';
+          return `<option value="${val}" ${sel}>${val} - ${mName.slice(0, 3)}</option>`;
+        }).join('');
+      };
+
+      tbody.innerHTML = rows.map(p => {
+        const { usedStart, baseType } = computeProgramStart(p);
+        const baseBadge = baseType === 'Definitiva'
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : (baseType === 'Aproximada' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200');
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition-colors">
+            <td class="py-2 px-3 font-mono font-bold text-slate-700">${p.code}</td>
+            <td class="py-2 px-3">
+              <input type="text" value="${escapeAttr(p.name)}" onchange="updateProgramField('${p.code}', 'name', this.value)"
+                class="w-full rounded-lg border px-2.5 py-1.5 font-semibold text-slate-900 editable-highlight" />
+            </td>
+            <td class="py-2 px-2">
+              <select onchange="updateProgramField('${p.code}', 'modality', this.value)"
+                class="w-full rounded-lg border px-2 py-1.5 editable-highlight">
+                ${['Online', 'Autoinstruccional', 'Presencial', 'Híbrido', 'Por definir'].map(mod => `<option value="${mod}" ${p.modality === mod ? 'selected' : ''}>${mod}</option>`).join('')}
+              </select>
+            </td>
+            <td class="py-2 px-3">
+              <input type="text" value="${escapeAttr(p.instructor)}" placeholder="Relator/a..." onchange="updateProgramField('${p.code}', 'instructor', this.value)"
+                class="w-full rounded-lg border px-2.5 py-1.5 editable-highlight" />
+            </td>
+            <td class="py-2 px-2 text-center">
+              <input type="number" value="${p.year || 2027}" min="2025" max="2030" onchange="updateProgramField('${p.code}', 'year', parseInt(this.value,10)||2027)"
+                class="w-16 text-center rounded-lg border px-1.5 py-1.5 editable-highlight font-mono" />
+            </td>
+            <td class="py-2 px-2 text-center">
+              <select onchange="updateProgramField('${p.code}', 'monthFrom', this.value ? parseInt(this.value,10) : null)"
+                class="w-full rounded-lg border px-1.5 py-1.5 editable-highlight">
+                ${monthOptions(p.monthFrom)}
+              </select>
+            </td>
+            <td class="py-2 px-2 text-center">
+              <select onchange="updateProgramField('${p.code}', 'monthTo', this.value ? parseInt(this.value,10) : null)"
+                class="w-full rounded-lg border px-1.5 py-1.5 editable-highlight">
+                ${monthOptions(p.monthTo)}
+              </select>
+            </td>
+            <td class="py-2 px-2 text-center">
+              <input type="date" value="${p.definitiveDate || ''}" onchange="updateProgramField('${p.code}', 'definitiveDate', this.value)"
+                class="w-full rounded-lg border px-2 py-1.5 editable-highlight font-mono text-[11px]" />
+            </td>
+            <td class="py-2 px-3 text-center bg-slate-50 font-mono font-bold text-slate-800">
+              ${formatISOToHuman(usedStart)}
+            </td>
+            <td class="py-2 px-2 text-center bg-slate-50">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${baseBadge}">${baseType}</span>
+            </td>
+            <td class="py-2 px-3">
+              <input type="text" value="${escapeAttr(p.notes)}" placeholder="Notas..." onchange="updateProgramField('${p.code}', 'notes', this.value)"
+                class="w-full rounded-lg border px-2.5 py-1.5 editable-highlight" />
+            </td>
+            <td class="py-2 px-2 text-center">
+              <button onclick="deleteProgram('${p.code}')" class="text-slate-400 hover:text-rose-600 p-1" title="Eliminar registro">
+                <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateProgramField(code, field, value) {
+      const prog = state.data.programs.find(p => p.code === code);
+      if (!prog) return;
+      prog[field] = value;
+      // If monthFrom is set and monthTo is empty, auto-match monthTo to monthFrom for convenience
+      if (field === 'monthFrom' && value && !prog.monthTo) {
+        prog.monthTo = value;
+      }
+      saveToStorage();
+      renderAll();
+      showToast(`Parámetro actualizado en ${code}`);
+    }
+
+    function deleteProgram(code) {
+      state.data.programs = state.data.programs.filter(p => p.code !== code);
+      saveToStorage();
+      renderAll();
+      showToast(`Programa ${code} eliminado`, 'warn');
+    }
+
+    function renderGeneralesTable() {
+      const tbody = document.getElementById('generales-tbody');
+      if (!tbody) return;
+      if (state.data.generales.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400">No hay publicaciones generales o efemérides registradas. Haz clic en "+ Nueva Publicación General" para agregar una.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = state.data.generales.map(g => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2 px-3 font-mono font-bold text-slate-600">${g.id}</td>
+          <td class="py-2 px-3">
+            <input type="text" value="${escapeAttr(g.title)}" onchange="updateGeneralField('${g.id}', 'title', this.value)"
+              class="w-full rounded border px-2 py-1 editable-highlight font-semibold" />
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${escapeAttr(g.type)}" onchange="updateGeneralField('${g.id}', 'type', this.value)"
+              class="w-full rounded border px-2 py-1 editable-highlight" />
+          </td>
+          <td class="py-2 px-3">
+            <input type="date" value="${g.date || ''}" onchange="updateGeneralField('${g.id}', 'date', this.value)"
+              class="w-full rounded border px-2 py-1 editable-highlight font-mono" />
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${escapeAttr(g.owner || '')}" onchange="updateGeneralField('${g.id}', 'owner', this.value)"
+              class="w-full rounded border px-2 py-1 editable-highlight" />
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${escapeAttr(g.channel || '')}" list="channel-options" onchange="updateGeneralField('${g.id}', 'channel', this.value)"
+              class="w-full rounded border px-2 py-1 editable-highlight" />
+          </td>
+          <td class="py-2 px-3">
+            <select onchange="updateGeneralField('${g.id}', 'status', this.value)" class="w-full rounded border px-2 py-1 editable-highlight">
+              ${['Pendiente', 'En preparación', 'Programada', 'Publicada', 'Cancelada'].map(s => `<option value="${s}" ${(g.status || 'Pendiente') === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${escapeAttr(g.notes || '')}" onchange="updateGeneralField('${g.id}', 'notes', this.value)"
+              class="w-full rounded border px-2 py-1 editable-highlight" />
+          </td>
+          <td class="py-2 px-3 text-center">
+            <button onclick="deleteGeneral('${g.id}')" class="text-slate-400 hover:text-rose-600 p-1">
+              <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateGeneralField(id, field, val) {
+      const g = state.data.generales.find(x => x.id === id);
+      if (!g) return;
+      g[field] = val;
+      saveToStorage();
+      renderAll();
+      showToast(`Publicación ${id} actualizada`);
+    }
+
+    function deleteGeneral(id) {
+      state.data.generales = state.data.generales.filter(x => x.id !== id);
+      saveToStorage();
+      renderAll();
+      showToast(`Publicación ${id} eliminada`, 'warn');
+    }
+
+    function renderReferenciasList() {
+      const container = document.getElementById('referencias-list');
+      if (!container) return;
+      container.innerHTML = state.data.referenceCourses.map((refTitle, idx) => `
+        <div class="bg-white rounded-xl p-3.5 border border-indigo-100 shadow-2xs flex flex-col justify-between gap-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">Referencia #${idx + 1}</span>
+            <h4 class="text-xs font-bold text-slate-900 mt-1.5">${refTitle}</h4>
+          </div>
+          <button onclick="promoteReferenceToCourse(${idx})" class="w-full py-1.5 px-3 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all">
+            + Incorporar al Registro de Cursos 2027
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function promoteReferenceToCourse(idx) {
+      const title = state.data.referenceCourses[idx];
+      if (!title) return;
+      openProgramModal();
+      document.getElementById('prog-origin').value = 'Curso';
+      updateSuggestedCode();
+      document.getElementById('prog-name').value = title.trim();
+      document.getElementById('prog-month-from').value = '6';
+      document.getElementById('prog-month-to').value = '6';
+    }
+
+    // --- TAB 4: AGENDA DE PUBLICACIONES ---
+    function renderAgendaTable() {
+      const tbody = document.getElementById('agenda-tbody');
+      if (!tbody) return;
+      const fOrigin = document.getElementById('agenda-filter-origin').value;
+      const fStatus = document.getElementById('agenda-filter-status').value;
+      const fMonth = document.getElementById('agenda-filter-month').value;
+      const q = (document.getElementById('agenda-search').value || '').toLowerCase().trim();
+
+      const allPubs = computeAllPublications().filter(p => {
+        if (state.globalYear !== 'all') {
+          if (p.usedDate && !p.usedDate.startsWith(String(state.globalYear))) return false;
+        }
+        if (fOrigin !== 'all' && p.origin !== fOrigin) return false;
+        if (fStatus !== 'all' && p.status !== fStatus) return false;
+        if (fMonth !== 'all') {
+          const d = parseISOToUTC(p.usedDate);
+          if (!d || (d.getUTCMonth() + 1) !== parseInt(fMonth, 10)) return false;
+        }
+        if (q && !p.id.toLowerCase().includes(q) && !p.programName.toLowerCase().includes(q) && !p.type.toLowerCase().includes(q) && !(p.owner || '').toLowerCase().includes(q) && !(p.channel || '').toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      if (allPubs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-400">No hay publicaciones que coincidan con los filtros seleccionados.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = allPubs.map(p => {
+        const st = getBadgeStyleForType(p.type);
+        const isOverridden = p.editorialDate && p.editorialDate !== '';
+        return `
+          <tr class="hover:bg-slate-50/80 transition-colors ${p.status === 'Cancelada' ? 'opacity-50 bg-slate-50' : ''}">
+            <td class="py-2 px-3 font-mono font-bold text-slate-700">${p.id}</td>
+            <td class="py-2 px-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">${p.origin}</span>
+            </td>
+            <td class="py-2 px-3 font-semibold text-slate-900">${p.programName}</td>
+            <td class="py-2 px-3">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium border ${st.bg} ${st.text} ${st.border}">
+                <span class="w-1.5 h-1.5 rounded-full ${st.dot}"></span> ${p.type}
+              </span>
+            </td>
+            <td class="py-2 px-3 text-center font-mono text-slate-600 bg-slate-50">${formatISOToHuman(p.suggestedDate)}</td>
+            <td class="py-2 px-3 text-center">
+              <div class="flex items-center gap-1 justify-center">
+                <input type="date" value="${p.editorialDate}" onchange="updatePublicationOverride('${p.id}', 'editorialDate', this.value)"
+                  class="rounded-lg border px-2 py-1 text-[11px] font-mono editable-highlight ${isOverridden ? 'ring-2 ring-amber-400 font-bold' : ''}" />
+                ${isOverridden ? `<button onclick="updatePublicationOverride('${p.id}', 'editorialDate', '')" title="Borrar fecha editorial y volver a sugerida" class="text-slate-400 hover:text-rose-600 px-1 font-bold">×</button>` : ''}
+              </div>
+            </td>
+            <td class="py-2 px-3 text-center font-mono font-bold bg-slate-50 ${isOverridden ? 'text-amber-700' : 'text-indigo-700'}">
+              ${p.usedDate ? formatISOToHuman(p.usedDate) : 'Sin fecha'}
+            </td>
+            <td class="py-2 px-3">
+              <input type="text" value="${escapeAttr(p.owner)}" placeholder="Asignar..." onchange="updatePublicationOverride('${p.id}', 'owner', this.value)"
+                class="w-full rounded-lg border px-2 py-1 editable-highlight" />
+            </td>
+            <td class="py-2 px-3">
+              <input type="text" value="${escapeAttr(p.channel)}" list="channel-options" placeholder="Canal..." onchange="updatePublicationOverride('${p.id}', 'channel', this.value)"
+                class="w-full rounded-lg border px-2 py-1 editable-highlight" />
+            </td>
+            <td class="py-2 px-3">
+              <select onchange="updatePublicationOverride('${p.id}', 'status', this.value)"
+                class="w-full rounded-lg border px-2 py-1 editable-highlight font-medium">
+                ${['Pendiente', 'En preparación', 'Programada', 'Publicada', 'Cancelada'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </td>
+            <td class="py-2 px-2 text-center">
+              <span class="text-[11px] text-slate-600">${p.baseType}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updatePublicationOverride(pubId, field, value) {
+      if (!state.data.overrides[pubId]) {
+        state.data.overrides[pubId] = {};
+      }
+      state.data.overrides[pubId][field] = value;
+      saveToStorage();
+      renderAll();
+      showToast(`Agenda actualizada (${pubId})`);
+    }
+
+    // --- TAB 5: REGLAS DE CÁLCULO ---
+    function renderRulesTable() {
+      const tbody = document.getElementById('rules-tbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = state.data.rules.map((r, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 px-3 font-semibold text-slate-900">${r.type}</td>
+          <td class="py-3 px-3 text-center">
+            <input type="number" min="0" max="52" value="${r.weeks}" onchange="updateRuleField(${idx}, 'weeks', parseInt(this.value, 10) || 0)"
+              class="w-20 text-center rounded-lg border px-2 py-1.5 font-mono font-bold editable-highlight" />
+          </td>
+          <td class="py-3 px-3">
+            <select onchange="updateRuleField(${idx}, 'reference', this.value)"
+              class="w-full rounded-lg border px-2.5 py-1.5 editable-highlight">
+              <option value="Antes del inicio" ${r.reference === 'Antes del inicio' ? 'selected' : ''}>Antes del inicio</option>
+              <option value="Después de presentación" ${r.reference === 'Después de presentación' ? 'selected' : ''}>Después de presentación</option>
+              <option value="Después del inicio" ${r.reference === 'Después del inicio' ? 'selected' : ''}>Después del inicio</option>
+            </select>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <button onclick="updateRuleField(${idx}, 'active', !state.data.rules[${idx}].active)"
+              class="px-3 py-1 rounded-full text-xs font-bold border transition-all ${r.active ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-slate-400 border-slate-300'}">
+              ${r.active ? 'Sí' : 'No'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      // Render Timeline Simulator for sample start date 2027-08-15
+      const sampleStart = '2027-08-15';
+      const r1 = state.data.rules[0];
+      const r1Date = r1 && r1.active ? addDaysUTC(sampleStart, (r1.reference === 'Después del inicio' ? 1 : -1) * r1.weeks * 7) : '';
+
+      const simCards = state.data.rules.map(r => {
+        let dt = '';
+        if (r.active) {
+          if (r.reference === 'Antes del inicio') dt = addDaysUTC(sampleStart, -r.weeks * 7);
+          else if (r.reference === 'Después del inicio') dt = addDaysUTC(sampleStart, r.weeks * 7);
+          else if (r.reference === 'Después de presentación' && r1Date) dt = addDaysUTC(r1Date, r.weeks * 7);
+        }
+        const st = getBadgeStyleForType(r.type);
+        return {
+          title: st.short,
+          fullType: r.type,
+          date: dt,
+          weeksDesc: r.active ? `${r.weeks} sem (${r.reference})` : 'Desactivada',
+          style: st
+        };
+      });
+
+      simCards.push({
+        title: '🎓 Inicio Curso',
+        fullType: 'Fecha de Inicio',
+        date: sampleStart,
+        weeksDesc: 'Hito central',
+        style: { bg: 'bg-slate-900', text: 'text-white', border: 'border-slate-800' }
+      });
+
+      simCards.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+
+      document.getElementById('rules-timeline-preview').innerHTML = simCards.map(c => `
+        <div class="rounded-xl p-3 border ${c.style.bg} ${c.style.text} ${c.style.border} flex flex-col justify-between">
+          <div class="text-[10px] font-bold uppercase opacity-75">${c.weeksDesc}</div>
+          <div class="text-xs font-bold mt-1">${c.title}</div>
+          <div class="text-xs font-mono font-bold mt-2">${c.date ? formatISOToHuman(c.date) : 'Inactiva'}</div>
+        </div>
+      `).join('');
+    }
+
+    function updateRuleField(idx, field, value) {
+      if (!state.data.rules[idx]) return;
+      state.data.rules[idx][field] = value;
+      saveToStorage();
+      renderAll();
+      showToast('Reglas actualizadas y calendario recalculado');
+    }
+
+    function resetDefaultRules() {
+      state.data.rules = getInitialData().rules;
+      saveToStorage();
+      renderAll();
+      showToast('Reglas restauradas a valores originales (9, 13, 5 y 1 semanas)');
+    }
+
+    // --- MODALS LOGIC ---
+    function openProgramModal(editCode = null) {
+      const modal = document.getElementById('modal-program');
+      modal.classList.remove('hidden');
+
+      if (editCode) {
+        const prog = state.data.programs.find(p => p.code === editCode);
+        if (!prog) return;
+        document.getElementById('modal-program-title').textContent = `Editar Programa (${prog.code})`;
+        document.getElementById('prog-edit-id').value = prog.code;
+        document.getElementById('prog-origin').value = prog.origin;
+        document.getElementById('prog-code').value = prog.code;
+        document.getElementById('prog-name').value = prog.name || '';
+        document.getElementById('prog-modality').value = prog.modality || 'Online';
+        document.getElementById('prog-instructor').value = prog.instructor || '';
+        document.getElementById('prog-year').value = prog.year || 2027;
+        document.getElementById('prog-month-from').value = prog.monthFrom || '';
+        document.getElementById('prog-month-to').value = prog.monthTo || '';
+        document.getElementById('prog-def-date').value = prog.definitiveDate || '';
+        document.getElementById('prog-notes').value = prog.notes || '';
+      } else {
+        document.getElementById('modal-program-title').textContent = 'Agregar Nuevo Programa';
+        document.getElementById('prog-edit-id').value = '';
+        document.getElementById('prog-origin').value = state.programSubtab === 'charlas' ? 'Charla' : 'Curso';
+        updateSuggestedCode();
+        document.getElementById('prog-name').value = '';
+        document.getElementById('prog-modality').value = 'Online';
+        document.getElementById('prog-instructor').value = '';
+        document.getElementById('prog-year').value = state.globalYear === 'all' ? 2027 : state.globalYear;
+        document.getElementById('prog-month-from').value = '6';
+        document.getElementById('prog-month-to').value = '6';
+        document.getElementById('prog-def-date').value = '';
+        document.getElementById('prog-notes').value = '';
+      }
+    }
+
+    function editProgramByCode(code) {
+      const gen = state.data.generales.find(g => g.id === code);
+      if (gen) {
+        openGeneralModal(code);
+        return;
+      }
+      openProgramModal(code);
+    }
+
+    function updateSuggestedCode() {
+      const editId = document.getElementById('prog-edit-id').value;
+      if (editId) return;
+      const origin = document.getElementById('prog-origin').value;
+      const prefix = origin === 'Charla' ? 'CH-' : 'C-';
+      const existingNums = state.data.programs
+        .filter(p => p.code.startsWith(prefix))
+        .map(p => parseInt(p.code.replace(prefix, ''), 10))
+        .filter(n => !isNaN(n));
+      const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+      document.getElementById('prog-code').value = `${prefix}${String(nextNum).padStart(3, '0')}`;
+    }
+
+    function closeProgramModal() {
+      document.getElementById('modal-program').classList.add('hidden');
+    }
+
+    function saveProgramFromModal(e) {
+      e.preventDefault();
+      const editId = document.getElementById('prog-edit-id').value;
+      const origin = document.getElementById('prog-origin').value;
+      const code = document.getElementById('prog-code').value.trim();
+      const name = document.getElementById('prog-name').value.trim();
+      const modality = document.getElementById('prog-modality').value;
+      const instructor = document.getElementById('prog-instructor').value.trim();
+      const year = parseInt(document.getElementById('prog-year').value, 10) || 2027;
+      const mFromRaw = document.getElementById('prog-month-from').value;
+      const mToRaw = document.getElementById('prog-month-to').value;
+      const monthFrom = mFromRaw ? parseInt(mFromRaw, 10) : null;
+      const monthTo = mToRaw ? parseInt(mToRaw, 10) : monthFrom;
+      const definitiveDate = document.getElementById('prog-def-date').value;
+      const notes = document.getElementById('prog-notes').value.trim();
+
+      if (editId) {
+        const idx = state.data.programs.findIndex(p => p.code === editId);
+        if (idx >= 0) {
+          state.data.programs[idx] = { code, origin, name, modality, instructor, year, monthFrom, monthTo, definitiveDate, notes };
+        }
+      } else {
+        state.data.programs.push({ code, origin, name, modality, instructor, year, monthFrom, monthTo, definitiveDate, notes });
+      }
+
+      saveToStorage();
+      closeProgramModal();
+      renderAll();
+      showToast(`Programa ${code} guardado correctamente`);
+    }
+
+    let currentPubModalProgramCode = null;
+
+    function openPublicationModal(pubId) {
+      const allPubs = computeAllPublications();
+      const pub = allPubs.find(p => p.id === pubId);
+      if (!pub) return;
+
+      currentPubModalProgramCode = pub.programCode;
+      document.getElementById('pub-modal-key').value = pub.id;
+      document.getElementById('pub-modal-id').textContent = `${pub.id} (${pub.origin})`;
+      document.getElementById('pub-modal-title').textContent = pub.programName;
+      document.getElementById('pub-modal-type').textContent = pub.type;
+      document.getElementById('pub-modal-prog-start').textContent = `${formatISOToHuman(pub.programStart)} (${pub.baseType})`;
+      document.getElementById('pub-modal-suggested').textContent = formatISOToHuman(pub.suggestedDate);
+      document.getElementById('pub-modal-editorial').value = pub.editorialDate || '';
+      document.getElementById('pub-modal-status').value = pub.status || 'Pendiente';
+      document.getElementById('pub-modal-channel').value = pub.channel || '';
+      document.getElementById('pub-modal-owner').value = pub.owner || '';
+
+      document.getElementById('modal-publication').classList.remove('hidden');
+    }
+
+    function clearModalEditorialDate() {
+      document.getElementById('pub-modal-editorial').value = '';
+    }
+
+    function closePublicationModal() {
+      document.getElementById('modal-publication').classList.add('hidden');
+    }
+
+    function openProgramFromPubModal() {
+      const code = currentPubModalProgramCode;
+      closePublicationModal();
+      if (code) editProgramByCode(code);
+    }
+
+    function savePublicationModal(e) {
+      e.preventDefault();
+      const pubId = document.getElementById('pub-modal-key').value;
+      if (!state.data.overrides[pubId]) state.data.overrides[pubId] = {};
+      state.data.overrides[pubId].editorialDate = document.getElementById('pub-modal-editorial').value;
+      state.data.overrides[pubId].status = document.getElementById('pub-modal-status').value;
+      state.data.overrides[pubId].channel = document.getElementById('pub-modal-channel').value.trim();
+      state.data.overrides[pubId].owner = document.getElementById('pub-modal-owner').value.trim();
+
+      saveToStorage();
+      closePublicationModal();
+      renderAll();
+      showToast(`Publicación ${pubId} actualizada`);
+    }
+
+    function openGeneralModal(editId = null) {
+      const modal = document.getElementById('modal-general');
+      modal.classList.remove('hidden');
+      if (editId) {
+        const g = state.data.generales.find(x => x.id === editId);
+        if (!g) return;
+        document.getElementById('gen-edit-id').value = g.id;
+        document.getElementById('gen-title').value = g.title || '';
+        document.getElementById('gen-type').value = g.type || 'Efeméride';
+        document.getElementById('gen-date').value = g.date || '2027-10-10';
+        document.getElementById('gen-owner').value = g.owner || '';
+        document.getElementById('gen-channel').value = g.channel || '';
+        document.getElementById('gen-notes').value = g.notes || '';
+      } else {
+        document.getElementById('gen-edit-id').value = '';
+        document.getElementById('gen-title').value = '';
+        document.getElementById('gen-type').value = 'Efeméride';
+        document.getElementById('gen-date').value = '2027-10-10';
+        document.getElementById('gen-owner').value = '';
+        document.getElementById('gen-channel').value = '';
+        document.getElementById('gen-notes').value = '';
+      }
+    }
+
+    function closeGeneralModal() {
+      document.getElementById('modal-general').classList.add('hidden');
+    }
+
+    function saveGeneralModal(e) {
+      e.preventDefault();
+      const editId = document.getElementById('gen-edit-id').value;
+      const title = document.getElementById('gen-title').value.trim();
+      const type = document.getElementById('gen-type').value;
+      const date = document.getElementById('gen-date').value;
+      const owner = document.getElementById('gen-owner').value.trim();
+      const channel = document.getElementById('gen-channel').value.trim();
+      const notes = document.getElementById('gen-notes').value.trim();
+
+      if (editId) {
+        const idx = state.data.generales.findIndex(x => x.id === editId);
+        if (idx >= 0) {
+          state.data.generales[idx] = { ...state.data.generales[idx], title, type, date, owner, channel, notes };
+        }
+      } else {
+        const nextNum = state.data.generales.length + 1;
+        const id = `G-${nextNum}`;
+        state.data.generales.push({ id, title, type, date, owner, channel, status: 'Pendiente', notes });
+      }
+      saveToStorage();
+      closeGeneralModal();
+      renderAll();
+      showToast('Publicación general guardada');
+    }
+
+    // --- EXPORT / IMPORT / RESET ---
+    function toggleDataMenu() {
+      const menu = document.getElementById('dropdown-data-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const btn = document.getElementById('btn-data-menu');
+      const menu = document.getElementById('dropdown-data-menu');
+      if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
+    function downloadBlob(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportAgendaCSV() {
+      const pubs = computeAllPublications();
+      const headers = ['ID', 'Origen', 'Programa / contenido', 'Tipo de publicación', 'Fecha sugerida', 'Fecha editorial', 'Fecha utilizada', 'Responsable', 'Canal', 'Estado', 'Base del inicio'];
+      const rows = pubs.map(p => [
+        p.id, p.origin, p.programName, p.type, p.suggestedDate, p.editorialDate, p.usedDate, p.owner, p.channel, p.status, p.baseType
+      ]);
+      const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${String(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      downloadBlob(csvContent, 'Agenda_Publicaciones_2027.csv', 'text/csv;charset=utf-8;');
+      document.getElementById('dropdown-data-menu').classList.add('hidden');
+      showToast('Agenda exportada a CSV (compatible con Excel)');
+    }
+
+    function exportProgramsCSV() {
+      const headers = ['Código', 'Origen', 'Programa', 'Modalidad', 'Relator/a', 'Año', 'Mes desde', 'Mes hasta', 'Fecha definitiva', 'Inicio utilizado', 'Base de fecha', 'Notas'];
+      const rows = state.data.programs.map(p => {
+        const { usedStart, baseType } = computeProgramStart(p);
+        return [p.code, p.origin, p.name, p.modality, p.instructor, p.year, p.monthFrom || '', p.monthTo || '', p.definitiveDate || '', usedStart, baseType, p.notes || ''];
+      });
+      const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${String(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      downloadBlob(csvContent, 'Registro_Programas_2027.csv', 'text/csv;charset=utf-8;');
+      document.getElementById('dropdown-data-menu').classList.add('hidden');
+      showToast('Registro de Programas exportado a CSV');
+    }
+
+    function exportBackupJSON() {
+      const jsonStr = JSON.stringify(state.data, null, 2);
+      downloadBlob(jsonStr, 'Respaldo_Calendario_Publicaciones_2027.json', 'application/json');
+      document.getElementById('dropdown-data-menu').classList.add('hidden');
+      showToast('Respaldo JSON descargado');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && Array.isArray(parsed.rules) && Array.isArray(parsed.programs)) {
+            state.data = parsed;
+            saveToStorage();
+            renderAll();
+            showToast('Respaldo JSON cargado exitosamente');
+          } else {
+            showToast('El archivo JSON no tiene el formato esperado', 'warn');
+          }
+        } catch (err) {
+          showToast('Error al leer el archivo JSON', 'warn');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+      document.getElementById('dropdown-data-menu').classList.add('hidden');
+    }
+
+    function openResetConfirmModal() {
+      document.getElementById('dropdown-data-menu').classList.add('hidden');
+      document.getElementById('modal-reset').classList.remove('hidden');
+    }
+
+    function closeResetConfirmModal() {
+      document.getElementById('modal-reset').classList.add('hidden');
+    }
+
+    function confirmResetAllData() {
+      state.data = getInitialData();
+      saveToStorage();
+      closeResetConfirmModal();
+      renderAll();
+      showToast('Datos restaurados a la planilla original 2027');
+    }
+
+    function escapeAttr(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // --- CLOUD SYNC ENGINE (GITHUB API / GOOGLE APPS SCRIPT / REST JSON) ---
+    const CLOUD_CONFIG_KEY = 'calendario_publicaciones_2027_cloud_cfg';
+    let cloudConfig = {
+      enabled: false,
+      provider: 'github', // 'github' | 'gas' | 'rest'
+      ghOwner: '',
+      ghRepo: '',
+      ghBranch: 'main',
+      ghPath: 'datos.json',
+      ghToken: '',
+      gasUrl: '',
+      restUrl: '',
+      autoSync: false
+    };
+
+    function loadCloudConfig() {
+      try {
+        const raw = localStorage.getItem(CLOUD_CONFIG_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            cloudConfig = { ...cloudConfig, ...parsed };
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo leer configuración de nube:', e);
+      }
+      updateCloudHeaderUI();
+    }
+
+    function saveCloudConfig() {
+      try {
+        localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+      } catch (e) {
+        console.warn('No se pudo guardar configuración de nube:', e);
+      }
+      updateCloudHeaderUI();
+    }
+
+    function updateCloudHeaderUI() {
+      const dot = document.getElementById('cloud-status-dot');
+      const label = document.getElementById('cloud-status-label');
+      const btnPull = document.getElementById('btn-cloud-pull');
+      const btnPush = document.getElementById('btn-cloud-push');
+      if (!dot || !label) return;
+
+      if (cloudConfig.enabled) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        const provName = cloudConfig.provider === 'github' ? 'GitHub' : (cloudConfig.provider === 'gas' ? 'Google Cloud' : 'Nube REST');
+        label.textContent = `Conectado (${provName})`;
+        btnPull.classList.remove('hidden');
+        btnPush.classList.remove('hidden');
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        label.textContent = 'Nube / Equipo';
+        btnPull.classList.add('hidden');
+        btnPush.classList.add('hidden');
+      }
+    }
+
+    function setCloudProviderUI(prov) {
+      cloudConfig.provider = prov;
+      ['github', 'gas', 'rest'].forEach(p => {
+        const tab = document.getElementById(`cloud-tab-${p}`);
+        const panel = document.getElementById(`cloud-panel-${p}`);
+        if (tab) {
+          tab.className = p === prov
+            ? 'p-3 rounded-xl border-2 border-indigo-600 bg-indigo-50/50 text-left transition-all'
+            : 'p-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-left transition-all';
+        }
+        if (panel) {
+          panel.classList.toggle('hidden', p !== prov);
+        }
+      });
+    }
+
+    function openCloudSyncModal() {
+      document.getElementById('gh-owner').value = cloudConfig.ghOwner || '';
+      document.getElementById('gh-repo').value = cloudConfig.ghRepo || '';
+      document.getElementById('gh-branch').value = cloudConfig.ghBranch || 'main';
+      document.getElementById('gh-path').value = cloudConfig.ghPath || 'datos.json';
+      document.getElementById('gh-token').value = cloudConfig.ghToken || '';
+      document.getElementById('gas-url').value = cloudConfig.gasUrl || '';
+      document.getElementById('rest-url').value = cloudConfig.restUrl || '';
+      document.getElementById('cloud-autosync').checked = !!cloudConfig.autoSync;
+      setCloudProviderUI(cloudConfig.provider || 'github');
+      document.getElementById('modal-cloud').classList.remove('hidden');
+    }
+
+    function closeCloudSyncModal() {
+      document.getElementById('modal-cloud').classList.add('hidden');
+    }
+
+    function copyGasSnippet() {
+      const code = document.getElementById('gas-code-snippet').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(() => showToast('Código de Google Apps Script copiado'));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Código de Google Apps Script copiado');
+      }
+    }
+
+    function saveCloudConfigAndSync() {
+      cloudConfig.ghOwner = document.getElementById('gh-owner').value.trim();
+      cloudConfig.ghRepo = document.getElementById('gh-repo').value.trim();
+      cloudConfig.ghBranch = document.getElementById('gh-branch').value.trim() || 'main';
+      cloudConfig.ghPath = document.getElementById('gh-path').value.trim() || 'datos.json';
+      cloudConfig.ghToken = document.getElementById('gh-token').value.trim();
+      cloudConfig.gasUrl = document.getElementById('gas-url').value.trim();
+      cloudConfig.restUrl = document.getElementById('rest-url').value.trim();
+      cloudConfig.autoSync = document.getElementById('cloud-autosync').checked;
+
+      if (cloudConfig.provider === 'github' && (!cloudConfig.ghOwner || !cloudConfig.ghRepo)) {
+        showToast('Ingresa el usuario y nombre del repositorio de GitHub', 'warn');
+        return;
+      }
+      if (cloudConfig.provider === 'gas' && !cloudConfig.gasUrl) {
+        showToast('Ingresa la URL de la aplicación web de Google Apps Script', 'warn');
+        return;
+      }
+      if (cloudConfig.provider === 'rest' && !cloudConfig.restUrl) {
+        showToast('Ingresa la URL del endpoint JSON', 'warn');
+        return;
+      }
+
+      cloudConfig.enabled = true;
+      saveCloudConfig();
+      closeCloudSyncModal();
+      showToast('Configuración de nube guardada. Sincronizando...');
+      pullFromCloud(true);
+    }
+
+    function disconnectCloudSync() {
+      cloudConfig.enabled = false;
+      cloudConfig.autoSync = false;
+      saveCloudConfig();
+      closeCloudSyncModal();
+      showToast('Sincronización en la nube desconectada');
+    }
+
+    function utf8ToBase64(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function base64ToUtf8(b64) {
+      return decodeURIComponent(escape(atob(b64.replace(/\s/g, ''))));
+    }
+
+    async function pullFromCloud(silentIfMissing = false) {
+      if (!cloudConfig.enabled) return;
+      try {
+        let remoteData = null;
+        if (cloudConfig.provider === 'github') {
+          const url = `https://api.github.com/repos/${cloudConfig.ghOwner}/${cloudConfig.ghRepo}/contents/${cloudConfig.ghPath}?ref=${encodeURIComponent(cloudConfig.ghBranch)}&t=${Date.now()}`;
+          const headers = { 'Accept': 'application/vnd.github.v3+json' };
+          if (cloudConfig.ghToken) headers['Authorization'] = `Bearer ${cloudConfig.ghToken}`;
+          const res = await fetch(url, { headers });
+          if (res.status === 404) {
+            if (!silentIfMissing) showToast('Aún no existe datos.json en el repo. Presiona "☁️ Publicar" para crearlo.', 'warn');
+            return;
+          }
+          if (!res.ok) throw new Error(`GitHub HTTP ${res.status}`);
+          const fileMeta = await res.json();
+          if (fileMeta && fileMeta.content) {
+            remoteData = JSON.parse(base64ToUtf8(fileMeta.content));
+          }
+        } else if (cloudConfig.provider === 'gas') {
+          const res = await fetch(cloudConfig.gasUrl);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          remoteData = await res.json();
+        } else if (cloudConfig.provider === 'rest') {
+          const res = await fetch(cloudConfig.restUrl);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          remoteData = await res.json();
+        }
+
+        if (remoteData && Array.isArray(remoteData.rules) && Array.isArray(remoteData.programs)) {
+          state.data = remoteData;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+          renderAll();
+          showToast('Datos actualizados desde la nube');
+        } else if (!silentIfMissing) {
+          showToast('El almacenamiento en la nube está vacío; presiona "☁️ Publicar" para subir los datos iniciales.', 'warn');
+        }
+      } catch (err) {
+        console.warn('Error al cargar desde la nube:', err);
+        if (!silentIfMissing) showToast('No se pudo conectar con la nube. Verifica tu URL o Token.', 'warn');
+      }
+    }
+
+    async function pushToCloud(isAuto = false) {
+      if (!cloudConfig.enabled) return;
+      try {
+        const payloadStr = JSON.stringify(state.data, null, 2);
+
+        if (cloudConfig.provider === 'github') {
+          if (!cloudConfig.ghToken) {
+            if (!isAuto) showToast('Configura tu Token de GitHub en "Nube / Equipo" para poder guardar cambios.', 'warn');
+            return;
+          }
+          const apiBase = `https://api.github.com/repos/${cloudConfig.ghOwner}/${cloudConfig.ghRepo}/contents/${cloudConfig.ghPath}`;
+          const headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'Authorization': `Bearer ${cloudConfig.ghToken}`,
+            'Content-Type': 'application/json'
+          };
+          // Obtain current file SHA if it exists
+          let currentSha = undefined;
+          const getRes = await fetch(`${apiBase}?ref=${encodeURIComponent(cloudConfig.ghBranch)}`, { headers });
+          if (getRes.ok) {
+            const getJson = await getRes.json();
+            currentSha = getJson.sha;
+          }
+          const bodyObj = {
+            message: `Actualización de calendario de publicaciones (${new Date().toLocaleString('es-CL')})`,
+            content: utf8ToBase64(payloadStr),
+            branch: cloudConfig.ghBranch
+          };
+          if (currentSha) bodyObj.sha = currentSha;
+
+          const putRes = await fetch(apiBase, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(bodyObj)
+          });
+          if (!putRes.ok) throw new Error(`GitHub PUT ${putRes.status}`);
+        } else if (cloudConfig.provider === 'gas') {
+          await fetch(cloudConfig.gasUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: payloadStr
+          });
+        } else if (cloudConfig.provider === 'rest') {
+          const putRes = await fetch(cloudConfig.restUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: payloadStr
+          });
+          if (!putRes.ok) throw new Error(`REST PUT ${putRes.status}`);
+        }
+
+        if (!isAuto) showToast('☁️ Cambios publicados en la nube para todo el equipo');
+      } catch (err) {
+        console.warn('Error al guardar en la nube:', err);
+        if (!isAuto) showToast('Error al publicar en la nube. Revisa permisos o conexión.', 'warn');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFromStorage();
+      loadCloudConfig();
+      renderAll();
+      if (cloudConfig.enabled) {
+        pullFromCloud(true);
+      }
+    });
+  </script>
+</body>
+</html>
